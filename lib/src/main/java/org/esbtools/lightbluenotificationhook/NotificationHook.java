@@ -1,6 +1,7 @@
 package org.esbtools.lightbluenotificationhook;
 
 import com.redhat.lightblue.DataError;
+import com.redhat.lightblue.EntityVersion;
 import com.redhat.lightblue.Response;
 import com.redhat.lightblue.config.LightblueFactory;
 import com.redhat.lightblue.config.LightblueFactoryAware;
@@ -92,8 +93,13 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             NotificationEntity notification =
                     makeNotificationEntityWithIncludedFields(hookDoc, includeProjector);
 
+            EntityVersion notificationVersion = new EntityVersion(
+                    NotificationEntity.ENTITY_NAME,
+                    NotificationEntity.ENTITY_VERSION);
+
             InsertionRequest newNotification = new InsertionRequest();
-            newNotification.setEntityVersion(notification.entityVersion());
+
+            newNotification.setEntityVersion(notificationVersion);
             newNotification.setEntityData(objectMapper.valueToTree(notification));
 
             Response response = mediator.insert(newNotification);
@@ -119,8 +125,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         EntityMetadata metadata = hookDoc.getEntityMetadata();
         JsonDoc postDoc = hookDoc.getPostDoc();
 
-        List<PathAndValue> identityValues = new ArrayList<>();
-        List<PathAndValue> includedValues = new ArrayList<>();
+        List<NotificationEntity.PathAndValue> identityValues = new ArrayList<>();
+        List<NotificationEntity.PathAndValue> includedValues = new ArrayList<>();
 
         for (Field identityField : metadata.getEntitySchema().getIdentityFields()) {
             Path identityPath = identityField.getFullPath();
@@ -128,7 +134,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             String pathString = identityPath.toString();
             String valueString = postDoc.get(identityPath).asText();
 
-            identityValues.add(new PathAndValue(pathString, valueString));
+            identityValues.add(new NotificationEntity.PathAndValue(pathString, valueString));
         }
 
         JsonDoc includedDoc = includeProjector.project(postDoc, jsonNodeFactory);
@@ -141,7 +147,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             String pathString = cursor.getCurrentPath().toString();
             String valueString = cursor.getCurrentNode().asText();
 
-            includedValues.add(new PathAndValue(pathString, valueString));
+            includedValues.add(new NotificationEntity.PathAndValue(pathString, valueString));
         }
 
         NotificationEntity.Operation operation = hookDoc.getPreDoc() == null
@@ -157,7 +163,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                     .setEventSource(hookDoc.getWho())
                     // TODO: Is lightblue on jdk8 yet?
                     .setOccurrenceDate(hookDoc.getWhen().toInstant())
-                    .setStatus(EventStatus.NEW);
+                    .setStatus(NotificationEntity.Status.NEW);
     }
 
     private Mediator tryGetMediator() {

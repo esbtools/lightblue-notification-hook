@@ -1,8 +1,11 @@
 package org.esbtools.lightbluenotificationhook;
 
-import com.redhat.lightblue.EntityVersion;
+import io.github.alechenninger.lightblue.Description;
+import io.github.alechenninger.lightblue.Identity;
+import io.github.alechenninger.lightblue.MinItems;
+import io.github.alechenninger.lightblue.Required;
+import io.github.alechenninger.lightblue.Version;
 
-import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,16 +17,17 @@ import java.util.Objects;
  * <p>Notifications include just the very immediate, basic information known at the time of a CRUD
  * operation on an integrated entity on integrated fields.
  */
+@Version(value = NotificationEntity.ENTITY_VERSION, changelog = "Initial")
 public class NotificationEntity {
-    private static final EntityVersion VERSION = new EntityVersion("notification", "0.0.1");
+    public static final String ENTITY_NAME = "notification";
+    public static final String ENTITY_VERSION = "0.0.1";
 
-    @Nullable
     private String _id;
     private String entityName;
     private String entityVersion;
     private List<PathAndValue> entityIdentity = new ArrayList<>();
     private List<PathAndValue> entityIncludedFields = new ArrayList<>();
-    private EventStatus status;
+    private Status status;
     private Operation operation;
     /**
      * This should probably be who triggered the notification. We only do certain things if ESB
@@ -36,15 +40,12 @@ public class NotificationEntity {
         INSERT, UPDATE, SYNC
     }
 
-    public EntityVersion entityVersion() {
-        return VERSION;
-    }
-
     public String get_id() {
         return _id;
     }
 
-    public NotificationEntity set_id(String _id) {
+    @Identity
+    public NotificationEntity set_id( String _id) {
         this._id = _id;
         return this;
     }
@@ -53,6 +54,7 @@ public class NotificationEntity {
         return entityName;
     }
 
+    @Required
     public NotificationEntity setEntityName(String entityName) {
         this.entityName = entityName;
         return this;
@@ -62,6 +64,7 @@ public class NotificationEntity {
         return entityVersion;
     }
 
+    @Required
     public NotificationEntity setEntityVersion(String entityVersion) {
         this.entityVersion = entityVersion;
         return this;
@@ -71,6 +74,7 @@ public class NotificationEntity {
         return entityIdentity;
     }
 
+    @MinItems(1)
     public NotificationEntity setEntityIdentity(List<PathAndValue> entityIdentity) {
         this.entityIdentity = entityIdentity;
         return this;
@@ -85,11 +89,12 @@ public class NotificationEntity {
         return this;
     }
 
-    public EventStatus getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public NotificationEntity setStatus(EventStatus status) {
+    @Required
+    public NotificationEntity setStatus(Status status) {
         this.status = status;
         return this;
     }
@@ -98,6 +103,7 @@ public class NotificationEntity {
         return operation;
     }
 
+    @Required
     public NotificationEntity setOperation(Operation operation) {
         this.operation = operation;
         return this;
@@ -107,6 +113,7 @@ public class NotificationEntity {
         return eventSource;
     }
 
+    @Required
     public NotificationEntity setEventSource(String eventSource) {
         this.eventSource = eventSource;
         return this;
@@ -116,6 +123,7 @@ public class NotificationEntity {
         return occurrenceDate;
     }
 
+    @Required
     public NotificationEntity setOccurrenceDate(Instant occurrenceDate) {
         this.occurrenceDate = occurrenceDate;
         return this;
@@ -155,5 +163,69 @@ public class NotificationEntity {
                 ", eventSource='" + eventSource + '\'' +
                 ", occurrenceDate=" + occurrenceDate +
                 '}';
+    }
+
+    public enum Status {
+        @Description("Persist fresh notifications as 'new'. " +
+                "New notifications are available to be processed.")
+        NEW,
+        @Description("Processing notifications should only be worked on in one thread at a time.")
+        PROCESSING,
+        @Description("Final state for a notification. Should not be reprocessed.")
+        PROCESSED,
+        FAILED
+    }
+
+    public static class PathAndValue {
+        private String path;
+        private String value;
+
+        public PathAndValue() {
+        }
+
+        public PathAndValue(String path, String value) {
+            this.path = path;
+            this.value = value;
+        }
+
+        public String getPath() {
+            return this.path;
+        }
+
+        @Required
+        public void setPath(String path) {
+            this.path = path;
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+
+        @Required
+        public void setValue(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PathAndValue identityValue = (PathAndValue) o;
+            return Objects.equals(path, identityValue.path) &&
+                    Objects.equals(value, identityValue.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(path, value);
+        }
+
+        @Override
+        public String toString() {
+            return "Identity{" +
+                    "path='" + path + '\'' +
+                    ", value='" + value + '\'' +
+                    '}';
+        }
     }
 }
