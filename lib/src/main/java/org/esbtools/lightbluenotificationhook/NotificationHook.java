@@ -154,16 +154,17 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 ? NotificationEntity.Operation.INSERT
                 : NotificationEntity.Operation.UPDATE;
 
-        return new NotificationEntity()
-                    .setEntityIdentity(identityValues)
-                    .setEntityIncludedFields(includedValues)
-                    .setEntityName(metadata.getName())
-                    .setEntityVersion(metadata.getVersion().getValue())
-                    .setOperation(operation)
-                    .setEventSource(hookDoc.getWho())
-                    // TODO: Is lightblue on jdk8 yet?
-                    .setOccurrenceDate(hookDoc.getWhen().toInstant())
-                    .setStatus(NotificationEntity.Status.NEW);
+        NotificationEntity notificationEntity = new NotificationEntity();
+        notificationEntity.setEntityIdentity(identityValues);
+        notificationEntity.setEntityIncludedFields(includedValues);
+        notificationEntity.setEntityName(metadata.getName());
+        notificationEntity.setEntityVersion(metadata.getVersion().getValue());
+        notificationEntity.setOperation(operation);
+        notificationEntity.setTriggeredByUser(hookDoc.getWho());
+        notificationEntity.setOccurrenceDate(hookDoc.getWhen().toInstant());
+        notificationEntity.setStatus(NotificationEntity.Status.NEW);
+
+        return notificationEntity;
     }
 
     private Mediator tryGetMediator() {

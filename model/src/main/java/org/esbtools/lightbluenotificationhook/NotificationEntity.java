@@ -20,7 +20,7 @@ import java.util.Objects;
 @Version(value = NotificationEntity.ENTITY_VERSION, changelog = "Initial")
 public class NotificationEntity {
     public static final String ENTITY_NAME = "notification";
-    public static final String ENTITY_VERSION = "0.0.1";
+    public static final String ENTITY_VERSION = "0.0.1-SNAPSHOT";
 
     private String _id;
     private String entityName;
@@ -29,15 +29,11 @@ public class NotificationEntity {
     private List<PathAndValue> entityIncludedFields = new ArrayList<>();
     private Status status;
     private Operation operation;
-    /**
-     * This should probably be who triggered the notification. We only do certain things if ESB
-     * itself wasn't the thing that updated the data.
-     */
-    private String eventSource;
+    private String triggeredByUser;
     private Instant occurrenceDate;
 
     public enum Operation {
-        INSERT, UPDATE, SYNC
+        INSERT, UPDATE
     }
 
     public String get_id() {
@@ -45,9 +41,8 @@ public class NotificationEntity {
     }
 
     @Identity
-    public NotificationEntity set_id( String _id) {
+    public void set_id(String _id) {
         this._id = _id;
-        return this;
     }
 
     public String getEntityName() {
@@ -55,9 +50,8 @@ public class NotificationEntity {
     }
 
     @Required
-    public NotificationEntity setEntityName(String entityName) {
+    public void setEntityName(String entityName) {
         this.entityName = entityName;
-        return this;
     }
 
     public String getEntityVersion() {
@@ -65,28 +59,26 @@ public class NotificationEntity {
     }
 
     @Required
-    public NotificationEntity setEntityVersion(String entityVersion) {
+    public void setEntityVersion(String entityVersion) {
         this.entityVersion = entityVersion;
-        return this;
     }
 
     public List<PathAndValue> getEntityIdentity() {
         return entityIdentity;
     }
 
+    @Required
     @MinItems(1)
-    public NotificationEntity setEntityIdentity(List<PathAndValue> entityIdentity) {
+    public void setEntityIdentity(List<PathAndValue> entityIdentity) {
         this.entityIdentity = entityIdentity;
-        return this;
     }
 
     public List<PathAndValue> getEntityIncludedFields() {
         return entityIncludedFields;
     }
 
-    public NotificationEntity setEntityIncludedFields(List<PathAndValue> entityIncludedFields) {
+    public void setEntityIncludedFields(List<PathAndValue> entityIncludedFields) {
         this.entityIncludedFields = entityIncludedFields;
-        return this;
     }
 
     public Status getStatus() {
@@ -94,9 +86,8 @@ public class NotificationEntity {
     }
 
     @Required
-    public NotificationEntity setStatus(Status status) {
+    public void setStatus(Status status) {
         this.status = status;
-        return this;
     }
 
     public Operation getOperation() {
@@ -104,19 +95,17 @@ public class NotificationEntity {
     }
 
     @Required
-    public NotificationEntity setOperation(Operation operation) {
+    public void setOperation(Operation operation) {
         this.operation = operation;
-        return this;
     }
 
-    public String getEventSource() {
-        return eventSource;
+    public String getTriggeredByUser() {
+        return triggeredByUser;
     }
 
     @Required
-    public NotificationEntity setEventSource(String eventSource) {
-        this.eventSource = eventSource;
-        return this;
+    public void setTriggeredByUser(String triggeredByUser) {
+        this.triggeredByUser = triggeredByUser;
     }
 
     public Instant getOccurrenceDate() {
@@ -124,9 +113,8 @@ public class NotificationEntity {
     }
 
     @Required
-    public NotificationEntity setOccurrenceDate(Instant occurrenceDate) {
+    public void setOccurrenceDate(Instant occurrenceDate) {
         this.occurrenceDate = occurrenceDate;
-        return this;
     }
 
     @Override
@@ -141,13 +129,13 @@ public class NotificationEntity {
                 Objects.equals(entityIncludedFields, that.entityIncludedFields) &&
                 status == that.status &&
                 operation == that.operation &&
-                Objects.equals(eventSource, that.eventSource) &&
+                Objects.equals(triggeredByUser, that.triggeredByUser) &&
                 Objects.equals(occurrenceDate, that.occurrenceDate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(_id, entityName, entityVersion, entityIdentity, entityIncludedFields, status, operation, eventSource, occurrenceDate);
+        return Objects.hash(_id, entityName, entityVersion, entityIdentity, entityIncludedFields, status, operation, triggeredByUser, occurrenceDate);
     }
 
     @Override
@@ -160,7 +148,7 @@ public class NotificationEntity {
                 ", normalizedEntityIdentity=" + entityIncludedFields +
                 ", status=" + status +
                 ", operation=" + operation +
-                ", eventSource='" + eventSource + '\'' +
+                ", eventSource='" + triggeredByUser + '\'' +
                 ", occurrenceDate=" + occurrenceDate +
                 '}';
     }
