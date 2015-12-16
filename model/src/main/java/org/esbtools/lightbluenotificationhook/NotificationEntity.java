@@ -135,7 +135,8 @@ public class NotificationEntity {
 
     @Override
     public int hashCode() {
-        return Objects.hash(_id, entityName, entityVersion, entityIdentity, entityIncludedFields, status, operation, triggeredByUser, occurrenceDate);
+        return Objects.hash(_id, entityName, entityVersion, entityIdentity, entityIncludedFields,
+                status, operation, triggeredByUser, occurrenceDate);
     }
 
     @Override
@@ -145,10 +146,10 @@ public class NotificationEntity {
                 ", entityName='" + entityName + '\'' +
                 ", entityVersion='" + entityVersion + '\'' +
                 ", entityIdentity=" + entityIdentity +
-                ", normalizedEntityIdentity=" + entityIncludedFields +
+                ", entityIncludedFields=" + entityIncludedFields +
                 ", status=" + status +
                 ", operation=" + operation +
-                ", eventSource='" + triggeredByUser + '\'' +
+                ", triggeredByUser='" + triggeredByUser + '\'' +
                 ", occurrenceDate=" + occurrenceDate +
                 '}';
     }
@@ -210,7 +211,7 @@ public class NotificationEntity {
 
         @Override
         public String toString() {
-            return "Identity{" +
+            return "PathAndValue{" +
                     "path='" + path + '\'' +
                     ", value='" + value + '\'' +
                     '}';
