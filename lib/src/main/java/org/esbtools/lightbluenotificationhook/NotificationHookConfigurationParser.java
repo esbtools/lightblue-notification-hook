@@ -7,11 +7,8 @@ import com.redhat.lightblue.metadata.parser.MetadataParser;
 
 /**
  * Entry-point for lightblue to the hook.
- *
- * <p>The generic type indicates the underlying metadata serialization format. As generics are not
- * enforced at runtime, we don't care what it is.
  */
-public class NotificationHookConfigurationParser implements HookConfigurationParser<Object> {
+public class NotificationHookConfigurationParser<T> implements HookConfigurationParser<T> {
     @Override
     public String getName() {
         return "notificationHook";
@@ -23,14 +20,12 @@ public class NotificationHookConfigurationParser implements HookConfigurationPar
     }
 
     @Override
-    public NotificationHookConfiguration parse(String name, MetadataParser<Object> parser,
-            Object parseMe) {
+    public NotificationHookConfiguration parse(String name, MetadataParser<T> parser, T parseMe) {
         return NotificationHookConfiguration.fromMetadata(parser, parseMe);
     }
 
     @Override
-    public void convert(MetadataParser<Object> parser, Object writeMe,
-            HookConfiguration hookConfiguration) {
+    public void convert(MetadataParser<T> parser, T writeMe, HookConfiguration hookConfiguration) {
         if (!(hookConfiguration instanceof NotificationHookConfiguration)) {
             throw new IllegalArgumentException("Can only parse NotificationHookConfiguration but " +
                     "got: " + hookConfiguration);

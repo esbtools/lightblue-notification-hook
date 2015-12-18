@@ -15,8 +15,8 @@ public class NotificationHookConfiguration implements HookConfiguration {
         this.includeProjection = includeProjection;
     }
 
-    public static NotificationHookConfiguration fromMetadata(MetadataParser<Object> parser,
-            Object parseMe) {
+    public static <T> NotificationHookConfiguration fromMetadata(MetadataParser<T> parser,
+            T parseMe) {
         Projection watchProjection = parser.getProjection(parseMe, "watchProjection");
         Projection includeProjection = parser.getProjection(parseMe, "includeProjection");
 
@@ -31,7 +31,7 @@ public class NotificationHookConfiguration implements HookConfiguration {
         return includeProjection;
     }
 
-    public void toMetadata(MetadataParser<Object> parser, Object writeMe) {
+    public <T> void toMetadata(MetadataParser<T> parser, T writeMe) {
         parser.putProjection(writeMe, "watchProjection", watchProjection);
         parser.putProjection(writeMe, "includeProjection", includeProjection);
     }
