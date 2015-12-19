@@ -125,8 +125,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         EntityMetadata metadata = hookDoc.getEntityMetadata();
         JsonDoc postDoc = hookDoc.getPostDoc();
 
-        List<NotificationEntity.PathAndValue> identityValues = new ArrayList<>();
-        List<NotificationEntity.PathAndValue> includedValues = new ArrayList<>();
+        List<NotificationEntity.PathAndValue> data = new ArrayList<>();
 
         for (Field identityField : metadata.getEntitySchema().getIdentityFields()) {
             Path identityPath = identityField.getFullPath();
@@ -134,7 +133,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             String pathString = identityPath.toString();
             String valueString = postDoc.get(identityPath).asText();
 
-            identityValues.add(new NotificationEntity.PathAndValue(pathString, valueString));
+            data.add(new NotificationEntity.PathAndValue(pathString, valueString));
         }
 
         JsonDoc includedDoc = includeProjector.project(postDoc, jsonNodeFactory);
@@ -147,7 +146,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             String pathString = cursor.getCurrentPath().toString();
             String valueString = cursor.getCurrentNode().asText();
 
-            includedValues.add(new NotificationEntity.PathAndValue(pathString, valueString));
+            data.add(new NotificationEntity.PathAndValue(pathString, valueString));
         }
 
         NotificationEntity.Operation operation = hookDoc.getPreDoc() == null
@@ -155,8 +154,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 : NotificationEntity.Operation.UPDATE;
 
         NotificationEntity notificationEntity = new NotificationEntity();
-        notificationEntity.setEntityIdentity(identityValues);
-        notificationEntity.setEntityIncludedFields(includedValues);
+        notificationEntity.setEntityData(data);
         notificationEntity.setEntityName(metadata.getName());
         notificationEntity.setEntityVersion(metadata.getVersion().getValue());
         notificationEntity.setOperation(operation);

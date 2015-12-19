@@ -4,11 +4,13 @@ import io.github.alechenninger.lightblue.Description;
 import io.github.alechenninger.lightblue.Identity;
 import io.github.alechenninger.lightblue.MinItems;
 import io.github.alechenninger.lightblue.Required;
+import io.github.alechenninger.lightblue.Transient;
 import io.github.alechenninger.lightblue.Version;
 
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -25,8 +27,7 @@ public class NotificationEntity {
     private String _id;
     private String entityName;
     private String entityVersion;
-    private List<PathAndValue> entityIdentity = new ArrayList<>();
-    private List<PathAndValue> entityIncludedFields = new ArrayList<>();
+    private Map<String, String> entityDataMap;
     private Status status;
     private Operation operation;
     private String triggeredByUser;
@@ -63,22 +64,18 @@ public class NotificationEntity {
         this.entityVersion = entityVersion;
     }
 
-    public List<PathAndValue> getEntityIdentity() {
-        return entityIdentity;
+    @Transient
+    public String getEntityDataForField(String fieldPath) {
+        return entityDataMap.get(fieldPath);
     }
 
     @Required
     @MinItems(1)
-    public void setEntityIdentity(List<PathAndValue> entityIdentity) {
-        this.entityIdentity = entityIdentity;
-    }
-
-    public List<PathAndValue> getEntityIncludedFields() {
-        return entityIncludedFields;
-    }
-
-    public void setEntityIncludedFields(List<PathAndValue> entityIncludedFields) {
-        this.entityIncludedFields = entityIncludedFields;
+    public void setEntityData(List<PathAndValue> entityIdentity) {
+        entityDataMap = new HashMap<>(entityIdentity.size());
+        for (PathAndValue pathAndValue : entityIdentity) {
+            entityDataMap.put(pathAndValue.getPath(), pathAndValue.getValue());
+        }
     }
 
     public Status getStatus() {
@@ -125,8 +122,7 @@ public class NotificationEntity {
         return Objects.equals(_id, that._id) &&
                 Objects.equals(entityName, that.entityName) &&
                 Objects.equals(entityVersion, that.entityVersion) &&
-                Objects.equals(entityIdentity, that.entityIdentity) &&
-                Objects.equals(entityIncludedFields, that.entityIncludedFields) &&
+                Objects.equals(entityDataMap, that.entityDataMap) &&
                 status == that.status &&
                 operation == that.operation &&
                 Objects.equals(triggeredByUser, that.triggeredByUser) &&
@@ -135,8 +131,7 @@ public class NotificationEntity {
 
     @Override
     public int hashCode() {
-        return Objects.hash(_id, entityName, entityVersion, entityIdentity, entityIncludedFields,
-                status, operation, triggeredByUser, occurrenceDate);
+        return Objects.hash(_id, entityName, entityVersion, entityDataMap, status, operation, triggeredByUser, occurrenceDate);
     }
 
     @Override
@@ -145,8 +140,7 @@ public class NotificationEntity {
                 "_id='" + _id + '\'' +
                 ", entityName='" + entityName + '\'' +
                 ", entityVersion='" + entityVersion + '\'' +
-                ", entityIdentity=" + entityIdentity +
-                ", entityIncludedFields=" + entityIncludedFields +
+                ", entityDataMap=" + entityDataMap +
                 ", status=" + status +
                 ", operation=" + operation +
                 ", triggeredByUser='" + triggeredByUser + '\'' +
@@ -190,7 +184,6 @@ public class NotificationEntity {
             return this.value;
         }
 
-        @Required
         public void setValue(String value) {
             this.value = value;
         }
