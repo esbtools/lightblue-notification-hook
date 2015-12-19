@@ -131,11 +131,13 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             Path identityPath = identityField.getFullPath();
 
             String pathString = identityPath.toString();
+            // TODO: Support objects and arrays
             String valueString = postDoc.get(identityPath).asText();
 
             data.add(new NotificationEntity.PathAndValue(pathString, valueString));
         }
 
+        // TODO: How does this work with array values?
         JsonDoc includedDoc = includeProjector.project(postDoc, jsonNodeFactory);
         JsonNodeCursor cursor = includedDoc.cursor();
         while (cursor.next()) {

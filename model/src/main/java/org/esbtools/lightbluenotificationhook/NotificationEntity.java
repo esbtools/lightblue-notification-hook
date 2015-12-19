@@ -8,9 +8,8 @@ import io.github.alechenninger.lightblue.Transient;
 import io.github.alechenninger.lightblue.Version;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
@@ -27,7 +26,7 @@ public class NotificationEntity {
     private String _id;
     private String entityName;
     private String entityVersion;
-    private Map<String, String> entityDataMap;
+    private List<PathAndValue> entityData;
     private Status status;
     private Operation operation;
     private String triggeredByUser;
@@ -66,16 +65,22 @@ public class NotificationEntity {
 
     @Transient
     public String getEntityDataForField(String fieldPath) {
-        return entityDataMap.get(fieldPath);
+        for (PathAndValue pathAndValue : entityData) {
+            if (Objects.equals(fieldPath, pathAndValue.getPath())) {
+                return pathAndValue.getValue();
+            }
+        }
+        throw new NoSuchElementException(fieldPath);
+    }
+
+    public List<PathAndValue> getEntityData() {
+        return entityData;
     }
 
     @Required
     @MinItems(1)
-    public void setEntityData(List<PathAndValue> entityIdentity) {
-        entityDataMap = new HashMap<>(entityIdentity.size());
-        for (PathAndValue pathAndValue : entityIdentity) {
-            entityDataMap.put(pathAndValue.getPath(), pathAndValue.getValue());
-        }
+    public void setEntityData(List<PathAndValue> entityData) {
+        this.entityData = entityData;
     }
 
     public Status getStatus() {
@@ -122,7 +127,7 @@ public class NotificationEntity {
         return Objects.equals(_id, that._id) &&
                 Objects.equals(entityName, that.entityName) &&
                 Objects.equals(entityVersion, that.entityVersion) &&
-                Objects.equals(entityDataMap, that.entityDataMap) &&
+                Objects.equals(entityData, that.entityData) &&
                 status == that.status &&
                 operation == that.operation &&
                 Objects.equals(triggeredByUser, that.triggeredByUser) &&
@@ -131,7 +136,7 @@ public class NotificationEntity {
 
     @Override
     public int hashCode() {
-        return Objects.hash(_id, entityName, entityVersion, entityDataMap, status, operation, triggeredByUser, occurrenceDate);
+        return Objects.hash(_id, entityName, entityVersion, entityData, status, operation, triggeredByUser, occurrenceDate);
     }
 
     @Override
@@ -140,7 +145,7 @@ public class NotificationEntity {
                 "_id='" + _id + '\'' +
                 ", entityName='" + entityName + '\'' +
                 ", entityVersion='" + entityVersion + '\'' +
-                ", entityDataMap=" + entityDataMap +
+                ", entityData=" + entityData +
                 ", status=" + status +
                 ", operation=" + operation +
                 ", triggeredByUser='" + triggeredByUser + '\'' +
