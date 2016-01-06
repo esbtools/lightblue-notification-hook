@@ -156,12 +156,12 @@ public class NotificationEntity {
     public enum Status {
         @Description("Persist fresh notifications as 'new'. " +
                 "New notifications are available to be processed.")
-        NEW,
+        unprocessed,
         @Description("Processing notifications should only be worked on in one thread at a time.")
-        PROCESSING,
+        processing,
         @Description("Final state for a notification. Should not be reprocessed.")
-        PROCESSED,
-        FAILED
+        processed,
+        failed
     }
 
     public static class PathAndValue {
