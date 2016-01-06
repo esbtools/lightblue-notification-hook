@@ -161,7 +161,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         notificationEntity.setEntityVersion(metadata.getVersion().getValue());
         notificationEntity.setOperation(operation);
         notificationEntity.setTriggeredByUser(hookDoc.getWho());
-        notificationEntity.setOccurrenceDate(hookDoc.getWhen().toInstant());
+        notificationEntity.setOccurrenceDate(hookDoc.getWhen());
         notificationEntity.setStatus(NotificationEntity.Status.unprocessed);
 
         return notificationEntity;
