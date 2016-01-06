@@ -1,13 +1,16 @@
 package org.esbtools.lightbluenotificationhook;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.github.alechenninger.lightblue.Description;
+import io.github.alechenninger.lightblue.EntityName;
 import io.github.alechenninger.lightblue.Identity;
 import io.github.alechenninger.lightblue.MinItems;
 import io.github.alechenninger.lightblue.Required;
 import io.github.alechenninger.lightblue.Transient;
 import io.github.alechenninger.lightblue.Version;
 
-import java.time.Instant;
+import javax.annotation.Nullable;
+import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -18,6 +21,7 @@ import java.util.Objects;
  * <p>Notifications include just the very immediate, basic information known at the time of a CRUD
  * operation on an integrated entity on integrated fields.
  */
+@EntityName(NotificationEntity.ENTITY_NAME)
 @Version(value = NotificationEntity.ENTITY_VERSION, changelog = "Initial")
 public class NotificationEntity {
     public static final String ENTITY_NAME = "notification";
@@ -30,7 +34,13 @@ public class NotificationEntity {
     private Status status;
     private Operation operation;
     private String triggeredByUser;
-    private Instant occurrenceDate;
+    // TODO: Would like to use JDK8 date types, but with lightblue's included version
+    // of jackson, @JsonFormat does not work.
+    // See: https://github.com/lightblue-platform/lightblue-core/issues/557
+    private Date occurrenceDate;
+    private Date processedDate;
+
+    private static final String LIGHTBLUE_DATE_FORMAT = "yyyyMMdd\'T\'HH:mm:ss.SSSZ";
 
     public enum Operation {
         INSERT, UPDATE
@@ -64,6 +74,7 @@ public class NotificationEntity {
     }
 
     @Transient
+    @Nullable
     public String getEntityDataForField(String fieldPath) {
         for (PathAndValue pathAndValue : entityData) {
             if (Objects.equals(fieldPath, pathAndValue.getPath())) {
@@ -110,13 +121,23 @@ public class NotificationEntity {
         this.triggeredByUser = triggeredByUser;
     }
 
-    public Instant getOccurrenceDate() {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = LIGHTBLUE_DATE_FORMAT)
+    public Date getOccurrenceDate() {
         return occurrenceDate;
     }
 
     @Required
-    public void setOccurrenceDate(Instant occurrenceDate) {
+    public void setOccurrenceDate(Date occurrenceDate) {
         this.occurrenceDate = occurrenceDate;
+    }
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = LIGHTBLUE_DATE_FORMAT)
+    public Date getProcessedDate() {
+        return processedDate;
+    }
+
+    public void setProcessedDate(Date processedDate) {
+        this.processedDate = processedDate;
     }
 
     @Override
@@ -136,7 +157,8 @@ public class NotificationEntity {
 
     @Override
     public int hashCode() {
-        return Objects.hash(_id, entityName, entityVersion, entityData, status, operation, triggeredByUser, occurrenceDate);
+        return Objects.hash(_id, entityName, entityVersion, entityData, status, operation,
+                triggeredByUser, occurrenceDate);
     }
 
     @Override
@@ -154,13 +176,15 @@ public class NotificationEntity {
     }
 
     public enum Status {
-        @Description("Persist fresh notifications as 'new'. " +
-                "New notifications are available to be processed.")
+        @Description("Persist fresh notifications as 'unprocessed'. " +
+                "Unprocessed notifications are available to be processed.")
         unprocessed,
         @Description("Processing notifications should only be worked on in one thread at a time.")
         processing,
         @Description("Final state for a notification. Should not be reprocessed.")
         processed,
+        @Description("Something went wrong when trying to determine what document events this " +
+                "notification should produce.")
         failed
     }
 
