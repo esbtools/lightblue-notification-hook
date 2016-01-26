@@ -7,20 +7,20 @@ import com.redhat.lightblue.query.Projection;
 import java.util.Objects;
 
 /**
- * Configures the notification hook for an entity
+ * Configures the notification hook for an entity.
  *
- * watchProjection: This projection defines a part of the document
+ * <p>watchProjection: This projection defines a part of the document
  * that is watched for changes. Any modifications to the fields
  * included in this projection will result in a notification being
  * fired
  *
- * includeProjection: This projection defines the payload of the
+ * <p>includeProjection: This projection defines the payload of the
  * message.
  *
- * propertiesProjection: This optional projection selects some fields
+ * <p>propertiesProjection: This optional projection selects some fields
  * in the entity to be stored as name-value pairs in properties field.
  *
- * arrayOrderingSignificant: If this is set to true, and if the only
+ * <p>arrayOrderingSignificant: If this is set to true, and if the only
  * thing changed in an array is the ordering of its elements, an event
  * is still generated. If false, array re-orderings are
  * ignored. Default is false.
