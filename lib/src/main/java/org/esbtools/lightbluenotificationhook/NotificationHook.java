@@ -76,14 +76,10 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         Projector watchProjector = Projector.getInstance(config.watchProjection(), entityMetadata);
         Projector includeProjector = Projector.getInstance(config.includeProjection(),
                                                            entityMetadata);
-        Projector propertiesProjector = config.propertiesProjection()==null?
-            null:Projector.getInstance(config.propertiesProjection(),entityMetadata);
-        
         for (HookDoc hookDoc : hookDocs) {
             HookResult result = processSingleHookDoc(entityMetadata,
                                                      watchProjector,
                                                      includeProjector,
-                                                     propertiesProjector,
                                                      config.isArrayOrderingSignificant(),
                                                      hookDoc,
                                                      mediator);
@@ -99,14 +95,13 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     private HookResult processSingleHookDoc(EntityMetadata metadata,
                                             Projector watchProjector,
                                             Projector includeProjector,
-                                            Projector propertiesProjector,
                                             boolean arrayOrderingSignificant,
                                             HookDoc hookDoc,
                                             Mediator mediator) {
         LOGGER.debug("Processing doc starts");
         JsonDoc postDoc = hookDoc.getPostDoc();
         JsonDoc preDoc = hookDoc.getPreDoc();
-
+        
         if (postDoc == null) {
             return HookResult.aborted();
         }
@@ -114,7 +109,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         if (watchedFieldsHaveChanged(metadata,preDoc, postDoc, watchProjector, arrayOrderingSignificant)) {
             LOGGER.debug("Watched fields changed, creating notification");
             NotificationEntity notification =
-                makeNotificationEntityWithIncludedFields(hookDoc, includeProjector, propertiesProjector);
+                makeNotificationEntityWithIncludedFields(hookDoc, includeProjector);
 
             EntityVersion notificationVersion = new EntityVersion(
                     NotificationEntity.ENTITY_NAME,
@@ -173,44 +168,39 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     }
 
     private NotificationEntity makeNotificationEntityWithIncludedFields(HookDoc hookDoc,
-                                                                        Projector includeProjector,
-                                                                        Projector propertiesProjector) {
+                                                                        Projector includeProjector) {
         EntityMetadata metadata = hookDoc.getEntityMetadata();
         JsonDoc postDoc = hookDoc.getPostDoc();
 
         NotificationEntity notificationEntity = new NotificationEntity();
         // Set the payload
         JsonDoc includeDoc=includeProjector.project(postDoc,jsonNodeFactory);
-        notificationEntity.setEntityData(includeDoc.toString());
         
-        List<NotificationEntity.FieldAndValue> properties=new ArrayList<>();
-        notificationEntity.setProperties(properties);
+        List<NotificationEntity.PathAndValue> data=new ArrayList<>();
         
-        // Set properties
-        if(propertiesProjector!=null) {
-            JsonDoc doc=propertiesProjector.project(postDoc,jsonNodeFactory);
-            JsonNodeCursor cursor=doc.cursor();
-            while(cursor.next()) {
-                properties.add(new NotificationEntity.FieldAndValue(cursor.getCurrentPath().toString(),
-                                                                    cursor.getCurrentNode().asText()));
-            }
+        JsonNodeCursor cursor=includeDoc.cursor();
+        while(cursor.next()) {
+            data.add(new NotificationEntity.PathAndValue(cursor.getCurrentPath().toString(),
+                                                         cursor.getCurrentNode().asText()));
         }
         // Add entity identities to properties
         for (Field identityField : metadata.getEntitySchema().getIdentityFields()) {
             Path identityPath = identityField.getFullPath();
             String pathString = identityPath.toString();
             boolean found=false;
-            for(NotificationEntity.FieldAndValue v:properties) {
-                if(v.getField().equals(pathString)) {
+            for(NotificationEntity.PathAndValue v:data) {
+                if(v.getPath().equals(pathString)) {
                     found=true;
                     break;
                 }
             }
             if(!found) {
                 String valueString = postDoc.get(identityPath).asText();            
-                properties.add(new NotificationEntity.FieldAndValue(pathString, valueString));
+                data.add(new NotificationEntity.PathAndValue(pathString, valueString));
             }
         }
+        
+        notificationEntity.setEntityData(data);
         
         NotificationEntity.Operation operation = hookDoc.getPreDoc() == null
             ? NotificationEntity.Operation.INSERT

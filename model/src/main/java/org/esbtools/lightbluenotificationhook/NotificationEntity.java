@@ -30,8 +30,7 @@ public class NotificationEntity {
     private String _id;
     private String entityName;
     private String entityVersion;
-    private String entityData;
-    private Status status;
+     private Status status;
     private Operation operation;
     private String triggeredByUser;
     // TODO: Would like to use JDK8 date types, but with lightblue's included version
@@ -39,7 +38,7 @@ public class NotificationEntity {
     // See: https://github.com/lightblue-platform/lightblue-core/issues/557
     private Date occurrenceDate;
     private Date processedDate;
-    private List<FieldAndValue> properties;
+    private List<PathAndValue> entityData;
 
     private static final String LIGHTBLUE_DATE_FORMAT = "yyyyMMdd\'T\'HH:mm:ss.SSSZ";
 
@@ -74,37 +73,12 @@ public class NotificationEntity {
         this.entityVersion = entityVersion;
     }
 
-    /**
-     * This is the modified document as projected by the NotificationHookConfiguration.includeProjection
-     */
-    public String getEntityData() {
+    public List<PathAndValue> getEntityData() {
         return entityData;
     }
 
-    /**
-     * This is the modified document as projected by the NotificationHookConfiguration.includeProjection
-     */
-    @Required
-    public void setEntityData(String entityData) {
-        this.entityData = entityData;
-    }
-
-    /**
-     * Properties include the entity identity fields, as well as all
-     * the fields given in
-     * NotificationHookConfiguration.propertiesProjection
-     */
-    public List<FieldAndValue> getProperties() {
-        return properties;
-    }
-
-    /**
-     * Properties include the entity identity fields, as well as all
-     * the fields given in
-     * NotificationHookConfiguration.propertiesProjection
-     */
-    public void setProperties(List<FieldAndValue> properties) {
-        this.properties=properties;
+    public void setEntityData(List<PathAndValue> data) {
+        this.entityData=data;
     }
 
     public Status getStatus() {
@@ -162,7 +136,6 @@ public class NotificationEntity {
                 Objects.equals(entityName, that.entityName) &&
                 Objects.equals(entityVersion, that.entityVersion) &&
                 Objects.equals(entityData, that.entityData) &&
-                Objects.equals(properties,that.properties) &&
                 status == that.status &&
                 operation == that.operation &&
                 Objects.equals(triggeredByUser, that.triggeredByUser) &&
@@ -182,7 +155,6 @@ public class NotificationEntity {
                 ", entityName='" + entityName + '\'' +
                 ", entityVersion='" + entityVersion + '\'' +
                 ", entityData=" + entityData +
-                ", properties=" + properties +
                 ", status=" + status +
                 ", operation=" + operation +
                 ", triggeredByUser='" + triggeredByUser + '\'' +
@@ -203,25 +175,25 @@ public class NotificationEntity {
         failed
     }
     
-    public static class FieldAndValue {
-        private String field;
+    public static class PathAndValue {
+        private String path;
         private String value;
 
-        public FieldAndValue() {
+        public PathAndValue() {
         }
 
-        public FieldAndValue(String field, String value) {
-            this.field = field;
+        public PathAndValue(String path, String value) {
+            this.path = path;
             this.value = value;
         }
 
-        public String getField() {
-            return this.field;
+        public String getPath() {
+            return this.path;
         }
 
         @Required
-        public void setField(String field) {
-            this.field = field;
+        public void setPath(String path) {
+            this.path = path;
         }
 
         public String getValue() {
@@ -236,20 +208,20 @@ public class NotificationEntity {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            FieldAndValue identityValue = (FieldAndValue) o;
-            return Objects.equals(field, identityValue.field) &&
+            PathAndValue identityValue = (PathAndValue) o;
+            return Objects.equals(path, identityValue.path) &&
                     Objects.equals(value, identityValue.value);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(field, value);
+            return Objects.hash(path, value);
         }
 
         @Override
         public String toString() {
-            return "FieldAndValue{" +
-                    "field='" + field + '\'' +
+            return "PathAndValue{" +
+                    "path='" + path + '\'' +
                     ", value='" + value + '\'' +
                     '}';
         }

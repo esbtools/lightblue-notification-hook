@@ -17,9 +17,6 @@ import java.util.Objects;
  * <p>includeProjection: This projection defines the payload of the
  * message.
  *
- * <p>propertiesProjection: This optional projection selects some fields
- * in the entity to be stored as name-value pairs in properties field.
- *
  * <p>arrayOrderingSignificant: If this is set to true, and if the only
  * thing changed in an array is the ordering of its elements, an event
  * is still generated. If false, array re-orderings are
@@ -28,16 +25,13 @@ import java.util.Objects;
 public class NotificationHookConfiguration implements HookConfiguration {
     private final Projection watchProjection;
     private final Projection includeProjection;
-    private final Projection propertiesProjection;
     private final boolean arrayOrderingSignificant;
 
     public NotificationHookConfiguration(Projection watchProjection,
                                          Projection includeProjection,
-                                         Projection propertiesProjection,
                                          boolean arrayOrderingSignificant) {
         this.watchProjection = watchProjection;
         this.includeProjection = includeProjection;
-        this.propertiesProjection = propertiesProjection;
         this.arrayOrderingSignificant = arrayOrderingSignificant;
     }
 
@@ -45,12 +39,10 @@ public class NotificationHookConfiguration implements HookConfiguration {
                                                                  T parseMe) {
         Projection watchProjection = parser.getProjection(parseMe, "watchProjection");
         Projection includeProjection = parser.getProjection(parseMe, "includeProjection");
-        Projection propertiesProjection = parser.getProjection(parseMe, "propertiesProjection");
         Object b=parser.getValueProperty(parseMe, "arrayOrderingSignificant");        
         
         return new NotificationHookConfiguration(watchProjection,
                                                  includeProjection,
-                                                 propertiesProjection,
                                                  b instanceof Boolean? (Boolean)b:false );
     }
     
@@ -62,10 +54,6 @@ public class NotificationHookConfiguration implements HookConfiguration {
         return includeProjection;
     }
 
-    public Projection propertiesProjection() {
-        return propertiesProjection;
-    }
-
     public boolean isArrayOrderingSignificant() {
         return arrayOrderingSignificant;
     }
@@ -73,8 +61,6 @@ public class NotificationHookConfiguration implements HookConfiguration {
     public <T> void toMetadata(MetadataParser<T> parser, T writeMe) {
         parser.putProjection(writeMe, "watchProjection", watchProjection);
         parser.putProjection(writeMe, "includeProjection", includeProjection);
-        if(propertiesProjection!=null)
-            parser.putProjection(writeMe, "propertiesProjection", propertiesProjection);
         if(arrayOrderingSignificant)
             parser.putValue(writeMe,"arrayOrderingSignificant",Boolean.TRUE);
     }
@@ -85,13 +71,12 @@ public class NotificationHookConfiguration implements HookConfiguration {
         if (o == null || getClass() != o.getClass()) return false;
         NotificationHookConfiguration that = (NotificationHookConfiguration) o;
         return Objects.equals(watchProjection, that.watchProjection) &&
-                Objects.equals(includeProjection, that.includeProjection) &&
-            Objects.equals(propertiesProjection, that.propertiesProjection);
+            Objects.equals(includeProjection, that.includeProjection);
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(watchProjection, includeProjection, propertiesProjection);
+        return Objects.hash(watchProjection, includeProjection);
     }
     
     @Override
@@ -99,7 +84,6 @@ public class NotificationHookConfiguration implements HookConfiguration {
         return "NotificationHookConfiguration{" +
             "watchProjection=" + watchProjection +
             ", includeProjection=" + includeProjection +
-            ", propertiesProjection="+propertiesProjection+
             '}';
     }
 }
