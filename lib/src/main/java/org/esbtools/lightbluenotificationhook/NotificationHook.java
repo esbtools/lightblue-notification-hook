@@ -1,5 +1,8 @@
 package org.esbtools.lightbluenotificationhook;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.redhat.lightblue.DataError;
 import com.redhat.lightblue.EntityVersion;
 import com.redhat.lightblue.Response;
@@ -17,8 +20,11 @@ import com.redhat.lightblue.util.Error;
 import com.redhat.lightblue.util.JsonDoc;
 import com.redhat.lightblue.util.JsonNodeCursor;
 import com.redhat.lightblue.util.Path;
+import com.redhat.lightblue.util.JsonCompare;
+import com.redhat.lightblue.util.DocComparator;;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.util.ArrayList;
@@ -31,6 +37,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     private final ObjectMapper objectMapper;
 
     private LightblueFactory lightblueFactory;
+
+    private static final Logger LOGGER=LoggerFactory.getLogger(NotificationHook.class);
 
     public NotificationHook(String name) {
         this(name, new ObjectMapper(), JsonNodeFactory.withExactBigDecimals(true));
@@ -54,8 +62,9 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     }
 
     @Override
-    public void processHook(EntityMetadata entityMetadata, HookConfiguration hookConfiguration,
-            List<HookDoc> hookDocs) {
+    public void processHook(EntityMetadata entityMetadata,
+                            HookConfiguration hookConfiguration,
+                            List<HookDoc> hookDocs) {
         if (!(hookConfiguration instanceof NotificationHookConfiguration)) {
             throw new IllegalArgumentException("Expected instance of " +
                     "NotificationHookConfiguration but got: " + hookConfiguration);
@@ -66,22 +75,35 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
 
         Projector watchProjector = Projector.getInstance(config.watchProjection(), entityMetadata);
         Projector includeProjector = Projector.getInstance(config.includeProjection(),
-                entityMetadata);
-
+                                                           entityMetadata);
+        Projector propertiesProjector = config.propertiesProjection()==null?
+            null:Projector.getInstance(config.propertiesProjection(),entityMetadata);
+        
         for (HookDoc hookDoc : hookDocs) {
-            HookResult result = processSingleHookDoc(watchProjector,
-                    includeProjector, hookDoc, mediator);
-
+            HookResult result = processSingleHookDoc(entityMetadata,
+                                                     watchProjector,
+                                                     includeProjector,
+                                                     propertiesProjector,
+                                                     config.isArrayOrderingSignificant(),
+                                                     hookDoc,
+                                                     mediator);
+            
             // TODO: batch
             if (result.hasErrorsOrDataErrors()) {
                 throw new NotificationInsertErrorsException(result.entity, result.errors,
-                        result.dataErrors);
+                                                            result.dataErrors);
             }
         }
     }
-
-    private HookResult processSingleHookDoc(Projector watchProjector, Projector includeProjector,
-            HookDoc hookDoc, Mediator mediator) {
+    
+    private HookResult processSingleHookDoc(EntityMetadata metadata,
+                                            Projector watchProjector,
+                                            Projector includeProjector,
+                                            Projector propertiesProjector,
+                                            boolean arrayOrderingSignificant,
+                                            HookDoc hookDoc,
+                                            Mediator mediator) {
+        LOGGER.debug("Processing doc starts");
         JsonDoc postDoc = hookDoc.getPostDoc();
         JsonDoc preDoc = hookDoc.getPreDoc();
 
@@ -89,9 +111,10 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             return HookResult.aborted();
         }
 
-        if (watchedFieldsHaveChanged(preDoc, postDoc, watchProjector)) {
+        if (watchedFieldsHaveChanged(metadata,preDoc, postDoc, watchProjector, arrayOrderingSignificant)) {
+            LOGGER.debug("Watched fields changed, creating notification");
             NotificationEntity notification =
-                    makeNotificationEntityWithIncludedFields(hookDoc, includeProjector);
+                makeNotificationEntityWithIncludedFields(hookDoc, includeProjector, propertiesProjector);
 
             EntityVersion notificationVersion = new EntityVersion(
                     NotificationEntity.ENTITY_NAME,
@@ -102,6 +125,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             newNotification.setEntityVersion(notificationVersion);
             newNotification.setEntityData(objectMapper.valueToTree(notification));
 
+            LOGGER.debug("Inserting notification");
             Response response = mediator.insert(newNotification);
 
             return new HookResult(notification, response.getErrors(), response.getDataErrors());
@@ -110,60 +134,95 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         return HookResult.aborted();
     }
 
-    private boolean watchedFieldsHaveChanged(JsonDoc preDoc, JsonDoc postDoc,
-            Projector watchProjector) {
+    /**
+     * Determines if any of the watched fields have changed. If
+     * arrayOrderingSignificant is true, also checks if array
+     * orderings also changed.
+     */
+    private boolean watchedFieldsHaveChanged(EntityMetadata metadata,
+                                             JsonDoc preDoc,
+                                             JsonDoc postDoc,
+                                             Projector watchProjector,
+                                             boolean arrayOrderingSignificant) {
         JsonDoc watchedPostDoc = watchProjector.project(postDoc, jsonNodeFactory);
         JsonDoc watchedPreDoc = preDoc == null
-                ? new JsonDoc(jsonNodeFactory.nullNode())
-                : watchProjector.project(preDoc, jsonNodeFactory);
+            ? new JsonDoc(jsonNodeFactory.objectNode())
+            : watchProjector.project(preDoc, jsonNodeFactory);
 
-        return !watchedPostDoc.getRoot().equals(watchedPreDoc.getRoot());
+        // Compute diff
+        JsonCompare cmp=metadata.getDocComparator();
+        try {
+            DocComparator.Difference diff=cmp.compareNodes(watchedPreDoc.getRoot(),watchedPostDoc.getRoot());
+            LOGGER.debug("Diff: {}",diff);
+            if(!diff.same()) {
+                if(diff.getNumChangedFields()>0) {
+                    return true;
+                } else {
+                    // Are there any array element moves?
+                    // Do we care?
+                    if(!diff.getDelta().isEmpty()&&arrayOrderingSignificant) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            LOGGER.error("Error processing notification",e);
+            return false;
+        }
     }
 
     private NotificationEntity makeNotificationEntityWithIncludedFields(HookDoc hookDoc,
-            Projector includeProjector) {
+                                                                        Projector includeProjector,
+                                                                        Projector propertiesProjector) {
         EntityMetadata metadata = hookDoc.getEntityMetadata();
         JsonDoc postDoc = hookDoc.getPostDoc();
 
-        List<NotificationEntity.PathAndValue> data = new ArrayList<>();
-
+        NotificationEntity notificationEntity = new NotificationEntity();
+        // Set the payload
+        JsonDoc includeDoc=includeProjector.project(postDoc,jsonNodeFactory);
+        notificationEntity.setEntityData(includeDoc.toString());
+        
+        List<NotificationEntity.FieldAndValue> properties=new ArrayList<>();
+        notificationEntity.setProperties(properties);
+        
+        // Set properties
+        if(propertiesProjector!=null) {
+            JsonDoc doc=propertiesProjector.project(postDoc,jsonNodeFactory);
+            JsonNodeCursor cursor=doc.cursor();
+            while(cursor.next()) {
+                properties.add(new NotificationEntity.FieldAndValue(cursor.getCurrentPath().toString(),
+                                                                    cursor.getCurrentNode().asText()));
+            }
+        }
+        // Add entity identities to properties
         for (Field identityField : metadata.getEntitySchema().getIdentityFields()) {
             Path identityPath = identityField.getFullPath();
-
             String pathString = identityPath.toString();
-            // TODO: Support objects and arrays
-            String valueString = postDoc.get(identityPath).asText();
-
-            data.add(new NotificationEntity.PathAndValue(pathString, valueString));
-        }
-
-        // TODO: How does this work with array values?
-        JsonDoc includedDoc = includeProjector.project(postDoc, jsonNodeFactory);
-        JsonNodeCursor cursor = includedDoc.cursor();
-        while (cursor.next()) {
-            if (cursor.parent()) {
-                continue;
+            boolean found=false;
+            for(NotificationEntity.FieldAndValue v:properties) {
+                if(v.getField().equals(pathString)) {
+                    found=true;
+                    break;
+                }
             }
-
-            String pathString = cursor.getCurrentPath().toString();
-            String valueString = cursor.getCurrentNode().asText();
-
-            data.add(new NotificationEntity.PathAndValue(pathString, valueString));
+            if(!found) {
+                String valueString = postDoc.get(identityPath).asText();            
+                properties.add(new NotificationEntity.FieldAndValue(pathString, valueString));
+            }
         }
-
+        
         NotificationEntity.Operation operation = hookDoc.getPreDoc() == null
-                ? NotificationEntity.Operation.INSERT
-                : NotificationEntity.Operation.UPDATE;
-
-        NotificationEntity notificationEntity = new NotificationEntity();
-        notificationEntity.setEntityData(data);
+            ? NotificationEntity.Operation.INSERT
+            : NotificationEntity.Operation.UPDATE;
+        
         notificationEntity.setEntityName(metadata.getName());
         notificationEntity.setEntityVersion(metadata.getVersion().getValue());
         notificationEntity.setOperation(operation);
         notificationEntity.setTriggeredByUser(hookDoc.getWho());
         notificationEntity.setOccurrenceDate(hookDoc.getWhen());
         notificationEntity.setStatus(NotificationEntity.Status.unprocessed);
-
+        
         return notificationEntity;
     }
 

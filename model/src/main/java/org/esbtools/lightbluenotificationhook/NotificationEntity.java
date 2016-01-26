@@ -30,7 +30,7 @@ public class NotificationEntity {
     private String _id;
     private String entityName;
     private String entityVersion;
-    private List<PathAndValue> entityData;
+    private String entityData;
     private Status status;
     private Operation operation;
     private String triggeredByUser;
@@ -39,6 +39,7 @@ public class NotificationEntity {
     // See: https://github.com/lightblue-platform/lightblue-core/issues/557
     private Date occurrenceDate;
     private Date processedDate;
+    private List<FieldAndValue> properties;
 
     private static final String LIGHTBLUE_DATE_FORMAT = "yyyyMMdd\'T\'HH:mm:ss.SSSZ";
 
@@ -73,25 +74,37 @@ public class NotificationEntity {
         this.entityVersion = entityVersion;
     }
 
-    @Transient
-    @Nullable
-    public String getEntityDataForField(String fieldPath) {
-        for (PathAndValue pathAndValue : entityData) {
-            if (Objects.equals(fieldPath, pathAndValue.getPath())) {
-                return pathAndValue.getValue();
-            }
-        }
-        throw new NoSuchElementException(fieldPath);
-    }
-
-    public List<PathAndValue> getEntityData() {
+    /**
+     * This is the modified document as projected by the NotificationHookConfiguration.includeProjection
+     */
+    public String getEntityData() {
         return entityData;
     }
 
+    /**
+     * This is the modified document as projected by the NotificationHookConfiguration.includeProjection
+     */
     @Required
-    @MinItems(1)
-    public void setEntityData(List<PathAndValue> entityData) {
+    public void setEntityData(String entityData) {
         this.entityData = entityData;
+    }
+
+    /**
+     * Properties include the entity identity fields, as well as all
+     * the fields given in
+     * NotificationHookConfiguration.propertiesProjection
+     */
+    public List<FieldAndValue> getProperties() {
+        return properties;
+    }
+
+    /**
+     * Properties include the entity identity fields, as well as all
+     * the fields given in
+     * NotificationHookConfiguration.propertiesProjection
+     */
+    public void setProperties(List<FieldAndValue> properties) {
+        this.properties=properties;
     }
 
     public Status getStatus() {
@@ -149,6 +162,7 @@ public class NotificationEntity {
                 Objects.equals(entityName, that.entityName) &&
                 Objects.equals(entityVersion, that.entityVersion) &&
                 Objects.equals(entityData, that.entityData) &&
+                Objects.equals(properties,that.properties) &&
                 status == that.status &&
                 operation == that.operation &&
                 Objects.equals(triggeredByUser, that.triggeredByUser) &&
@@ -168,6 +182,7 @@ public class NotificationEntity {
                 ", entityName='" + entityName + '\'' +
                 ", entityVersion='" + entityVersion + '\'' +
                 ", entityData=" + entityData +
+                ", properties=" + properties +
                 ", status=" + status +
                 ", operation=" + operation +
                 ", triggeredByUser='" + triggeredByUser + '\'' +
@@ -187,26 +202,26 @@ public class NotificationEntity {
                 "notification should produce.")
         failed
     }
-
-    public static class PathAndValue {
-        private String path;
+    
+    public static class FieldAndValue {
+        private String field;
         private String value;
 
-        public PathAndValue() {
+        public FieldAndValue() {
         }
 
-        public PathAndValue(String path, String value) {
-            this.path = path;
+        public FieldAndValue(String field, String value) {
+            this.field = field;
             this.value = value;
         }
 
-        public String getPath() {
-            return this.path;
+        public String getField() {
+            return this.field;
         }
 
         @Required
-        public void setPath(String path) {
-            this.path = path;
+        public void setField(String field) {
+            this.field = field;
         }
 
         public String getValue() {
@@ -221,20 +236,20 @@ public class NotificationEntity {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            PathAndValue identityValue = (PathAndValue) o;
-            return Objects.equals(path, identityValue.path) &&
+            FieldAndValue identityValue = (FieldAndValue) o;
+            return Objects.equals(field, identityValue.field) &&
                     Objects.equals(value, identityValue.value);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(path, value);
+            return Objects.hash(field, value);
         }
 
         @Override
         public String toString() {
-            return "PathAndValue{" +
-                    "path='" + path + '\'' +
+            return "FieldAndValue{" +
+                    "field='" + field + '\'' +
                     ", value='" + value + '\'' +
                     '}';
         }
