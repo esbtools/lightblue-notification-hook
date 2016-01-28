@@ -26,6 +26,7 @@ import com.redhat.lightblue.util.DocComparator;;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ContainerNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -180,8 +181,11 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         
         JsonNodeCursor cursor=includeDoc.cursor();
         while(cursor.next()) {
-            data.add(new NotificationEntity.PathAndValue(cursor.getCurrentPath().toString(),
-                                                         cursor.getCurrentNode().asText()));
+            JsonNode node=cursor.getCurrentNode();
+            if(!(node instanceof ContainerNode)) {
+                data.add(new NotificationEntity.PathAndValue(cursor.getCurrentPath().toString(),
+                                                             node.asText()));
+            }
         }
         // Add entity identities to properties
         for (Field identityField : metadata.getEntitySchema().getIdentityFields()) {
@@ -217,7 +221,6 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     }
 
     private Mediator tryGetMediator() {
-        // TODO: Could cache this result?
         try {
             return lightblueFactory.getMediator();
         } catch (Exception e) {

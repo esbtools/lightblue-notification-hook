@@ -126,7 +126,18 @@ public class NotificationEntity {
     public void setProcessedDate(Date processedDate) {
         this.processedDate = processedDate;
     }
-
+    
+    @Transient
+    @Nullable
+    public String getEntityDataForField(String fieldPath) {
+        for (PathAndValue pathAndValue : entityData) {
+            if (Objects.equals(fieldPath, pathAndValue.getPath())) {
+                return pathAndValue.getValue();
+            }
+        }
+        throw new NoSuchElementException(fieldPath);
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
