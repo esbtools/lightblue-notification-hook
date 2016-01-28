@@ -42,6 +42,13 @@
 
             <dependency>
                 <groupId>com.redhat.lightblue</groupId>
+                <artifactId>lightblue-core-crud</artifactId>
+                <version>${version.core.lightblue}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.redhat.lightblue</groupId>
                 <artifactId>lightblue-core-metadata</artifactId>
                 <version>${version.core.lightblue}</version>
                 <scope>provided</scope>

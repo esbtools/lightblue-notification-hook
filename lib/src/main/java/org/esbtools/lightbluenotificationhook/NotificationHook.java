@@ -21,7 +21,9 @@ import com.redhat.lightblue.util.JsonDoc;
 import com.redhat.lightblue.util.JsonNodeCursor;
 import com.redhat.lightblue.util.Path;
 import com.redhat.lightblue.util.JsonCompare;
-import com.redhat.lightblue.util.DocComparator;;
+import com.redhat.lightblue.util.DocComparator;
+import com.redhat.lightblue.query.Projection;
+import com.redhat.lightblue.query.FieldProjection;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,6 +35,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class NotificationHook implements CRUDHook, LightblueFactoryAware {
+
+    private static final Projection ALL_FIELDS=new FieldProjection(new Path("*"),true,true);
+    private static final Projection NO_FIELDS=new FieldProjection(new Path("*"),false,false);
+    
     private final String name;
     private final JsonNodeFactory jsonNodeFactory;
     private final ObjectMapper objectMapper;
@@ -74,8 +80,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         NotificationHookConfiguration config = (NotificationHookConfiguration) hookConfiguration;
         Mediator mediator = tryGetMediator();
 
-        Projector watchProjector = Projector.getInstance(config.watchProjection(), entityMetadata);
-        Projector includeProjector = Projector.getInstance(config.includeProjection(),
+        Projector watchProjector = Projector.getInstance(config.watchProjection()==null?ALL_FIELDS:config.watchProjection(), entityMetadata);
+        Projector includeProjector = Projector.getInstance(config.includeProjection()==null?NO_FIELDS:config.includeProjection(),
                                                            entityMetadata);
         for (HookDoc hookDoc : hookDocs) {
             HookResult result = processSingleHookDoc(entityMetadata,
@@ -178,13 +184,16 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         JsonDoc includeDoc=includeProjector.project(postDoc,jsonNodeFactory);
         
         List<NotificationEntity.PathAndValue> data=new ArrayList<>();
-        
-        JsonNodeCursor cursor=includeDoc.cursor();
-        while(cursor.next()) {
-            JsonNode node=cursor.getCurrentNode();
-            if(!(node instanceof ContainerNode)) {
-                data.add(new NotificationEntity.PathAndValue(cursor.getCurrentPath().toString(),
-                                                             node.asText()));
+
+        // Don't iterate if empty doc
+        if(includeDoc.getRoot().size()>0) {
+            JsonNodeCursor cursor=includeDoc.cursor();
+            while(cursor.next()) {
+                JsonNode node=cursor.getCurrentNode();
+                if(!(node instanceof ContainerNode)) {
+                    data.add(new NotificationEntity.PathAndValue(cursor.getCurrentPath().toString(),
+                                                                 node.asText()));
+                }
             }
         }
         // Add entity identities to properties
@@ -220,7 +229,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         return notificationEntity;
     }
 
-    private Mediator tryGetMediator() {
+    protected Mediator tryGetMediator() {
         try {
             return lightblueFactory.getMediator();
         } catch (Exception e) {
