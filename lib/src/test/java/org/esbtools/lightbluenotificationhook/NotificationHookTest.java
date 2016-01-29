@@ -179,9 +179,9 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         // Watch anything under "personalInfo"
         // Only store id in notification
         HookConfiguration cfg=new NotificationHookConfiguration(projection("{'field':'personalInfo','recursive':1}"),
-                                                                projection("{'field':'login'}"),
+                                                                projection("[{'field':'login'},{'field':'sites.*.siteType'}]"),
                                                                 false);
-
+        
         JsonNode post=loadJsonNode("userdata.json");
         JsonDoc.modify(post,new Path("personalInfo.company"),JsonNodeFactory.instance.textNode("blah"),true);
         
@@ -198,10 +198,12 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         Assert.assertNotNull(notification);
         System.out.println(notification);
         ArrayNode ed=(ArrayNode)notification.get("entityData");
-        Assert.assertEquals(3,ed.size());
+        Assert.assertEquals(5,ed.size());
         checkEntityData(ed,"_id","123");
         checkEntityData(ed,"iduid","345");
         checkEntityData(ed,"login","bserdar");
+        checkEntityData(ed,"sites.0.siteType","shipping");
+        checkEntityData(ed,"sites.1.siteType","billing");
     }
 
     private void checkEntityData(ArrayNode ed,String path,String value) {
