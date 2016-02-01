@@ -30,8 +30,7 @@ public class NotificationEntity {
     private String _id;
     private String entityName;
     private String entityVersion;
-    private List<PathAndValue> entityData;
-    private Status status;
+     private Status status;
     private Operation operation;
     private String triggeredByUser;
     // TODO: Would like to use JDK8 date types, but with lightblue's included version
@@ -39,6 +38,7 @@ public class NotificationEntity {
     // See: https://github.com/lightblue-platform/lightblue-core/issues/557
     private Date occurrenceDate;
     private Date processedDate;
+    private List<PathAndValue> entityData;
 
     private static final String LIGHTBLUE_DATE_FORMAT = "yyyyMMdd\'T\'HH:mm:ss.SSSZ";
 
@@ -73,25 +73,12 @@ public class NotificationEntity {
         this.entityVersion = entityVersion;
     }
 
-    @Transient
-    @Nullable
-    public String getEntityDataForField(String fieldPath) {
-        for (PathAndValue pathAndValue : entityData) {
-            if (Objects.equals(fieldPath, pathAndValue.getPath())) {
-                return pathAndValue.getValue();
-            }
-        }
-        throw new NoSuchElementException(fieldPath);
-    }
-
     public List<PathAndValue> getEntityData() {
         return entityData;
     }
 
-    @Required
-    @MinItems(1)
-    public void setEntityData(List<PathAndValue> entityData) {
-        this.entityData = entityData;
+    public void setEntityData(List<PathAndValue> data) {
+        this.entityData=data;
     }
 
     public Status getStatus() {
@@ -139,7 +126,18 @@ public class NotificationEntity {
     public void setProcessedDate(Date processedDate) {
         this.processedDate = processedDate;
     }
-
+    
+    @Transient
+    @Nullable
+    public String getEntityDataForField(String fieldPath) {
+        for (PathAndValue pathAndValue : entityData) {
+            if (Objects.equals(fieldPath, pathAndValue.getPath())) {
+                return pathAndValue.getValue();
+            }
+        }
+        throw new NoSuchElementException(fieldPath);
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -187,7 +185,7 @@ public class NotificationEntity {
                 "notification should produce.")
         failed
     }
-
+    
     public static class PathAndValue {
         private String path;
         private String value;
