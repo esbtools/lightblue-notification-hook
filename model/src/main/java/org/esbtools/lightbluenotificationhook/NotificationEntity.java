@@ -37,6 +37,7 @@ public class NotificationEntity {
     // of jackson, @JsonFormat does not work.
     // See: https://github.com/lightblue-platform/lightblue-core/issues/557
     private Date occurrenceDate;
+    private Date processingDate;
     private Date processedDate;
     private List<PathAndValue> entityData;
 
@@ -119,6 +120,15 @@ public class NotificationEntity {
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = LIGHTBLUE_DATE_FORMAT)
+    public Date getProcessingDate() {
+        return processingDate;
+    }
+
+    public void setProcessingDate(Date processingDate) {
+        this.processingDate = processingDate;
+    }
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = LIGHTBLUE_DATE_FORMAT)
     public Date getProcessedDate() {
         return processedDate;
     }
@@ -137,7 +147,7 @@ public class NotificationEntity {
         }
         throw new NoSuchElementException(fieldPath);
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -146,17 +156,19 @@ public class NotificationEntity {
         return Objects.equals(_id, that._id) &&
                 Objects.equals(entityName, that.entityName) &&
                 Objects.equals(entityVersion, that.entityVersion) &&
-                Objects.equals(entityData, that.entityData) &&
                 status == that.status &&
                 operation == that.operation &&
                 Objects.equals(triggeredByUser, that.triggeredByUser) &&
-                Objects.equals(occurrenceDate, that.occurrenceDate);
+                Objects.equals(occurrenceDate, that.occurrenceDate) &&
+                Objects.equals(processingDate, that.processingDate) &&
+                Objects.equals(processedDate, that.processedDate) &&
+                Objects.equals(entityData, that.entityData);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(_id, entityName, entityVersion, entityData, status, operation,
-                triggeredByUser, occurrenceDate);
+        return Objects.hash(_id, entityName, entityVersion, status, operation, triggeredByUser,
+                occurrenceDate, processingDate, processedDate, entityData);
     }
 
     @Override
@@ -165,11 +177,13 @@ public class NotificationEntity {
                 "_id='" + _id + '\'' +
                 ", entityName='" + entityName + '\'' +
                 ", entityVersion='" + entityVersion + '\'' +
-                ", entityData=" + entityData +
                 ", status=" + status +
                 ", operation=" + operation +
                 ", triggeredByUser='" + triggeredByUser + '\'' +
                 ", occurrenceDate=" + occurrenceDate +
+                ", processingDate=" + processingDate +
+                ", processedDate=" + processedDate +
+                ", entityData=" + entityData +
                 '}';
     }
 
