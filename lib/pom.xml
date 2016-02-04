@@ -23,6 +23,7 @@
         <version.junit>4.12</version.junit>
         <version.mockito>2.0.31-beta</version.mockito>
         <version.truth>0.27</version.truth>
+        <rpm.release_number>1</rpm.release_number>
     </properties>
 
     <dependencyManagement>
@@ -143,5 +144,88 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>rpm</id>
+            <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>buildnumber-maven-plugin</artifactId>
+                    <version>${version.buildnumber-maven-plugin}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>create</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+                        <shortRevisionLength>7</shortRevisionLength>
+                        <timestampFormat>{0,date,yyyyMMdd}</timestampFormat>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>${version.build-helper-maven-plugin}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>parse-version</goal>
+                                <goal>regex-property</goal>
+                            </goals>
+                            <configuration>
+                                <name>rpm.release_extra</name>
+                                <value>${parsedVersion.qualifier}git${buildNumber}</value>
+                                <regex>SNAPSHOT</regex>
+                                <replacement>\${timestamp}</replacement>
+                                <failIfNoMatch>false</failIfNoMatch>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>rpm-maven-plugin</artifactId>
+                    <version>${version.rpm-maven-plugin}</version>
+                    <executions>
+                        <execution>
+                            <id>generate-rpm</id>
+                            <goals>
+                                <goal>rpm</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <group>esbtools</group>
+                        <release>${rpm.release_number}.${rpm.release_extra}</release>
+                        <mappings>
+                            <mapping>
+                                <directory>/usr/share/java/lightblue/${project.artifactId}</directory>
+                                <sources>
+                                    <source>
+                                        <location>${project.build.directory}/${project.build.finalName}.${project.packaging}</location>
+                                    </source>
+                                </sources>
+                                <dependency>
+                                    <excludes>
+                                        <exclude>com.redhat.lightblue:lightblue-core-config</exclude>
+                                        <exclude>com.redhat.lightblue:lightblue-core-crud</exclude>
+                                        <exclude>com.redhat.lightblue:lightblue-core-metadata</exclude>
+                                        <exclude>com.fasterxml.jackson.core:jackson-annotations</exclude>
+                                        <exclude>com.google.code.findbugs:jsr305</exclude>
+                                    </excludes>
+                                </dependency>
+                            </mapping>
+                        </mappings>
+                    </configuration>
+                </plugin>
+            </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
