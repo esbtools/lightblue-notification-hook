@@ -215,6 +215,8 @@
                                         <exclude>com.redhat.lightblue:lightblue-core-config</exclude>
                                         <exclude>com.redhat.lightblue:lightblue-core-crud</exclude>
                                         <exclude>com.redhat.lightblue:lightblue-core-metadata</exclude>
+                                        <exclude>com.fasterxml.jackson.core:jackson-annotations</exclude>
+                                        <exclude>com.google.code.findbugs:jsr305</exclude>
                                     </excludes>
                                 </dependency>
                             </mapping>
