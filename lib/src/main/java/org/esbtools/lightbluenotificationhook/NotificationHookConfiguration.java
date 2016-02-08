@@ -66,26 +66,32 @@ public class NotificationHookConfiguration implements HookConfiguration {
         if(arrayOrderingSignificant)
             parser.putValue(writeMe,"arrayOrderingSignificant",Boolean.TRUE);
     }
-    
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         NotificationHookConfiguration that = (NotificationHookConfiguration) o;
-        return Objects.equals(watchProjection, that.watchProjection) &&
-            Objects.equals(includeProjection, that.includeProjection);
+        return arrayOrderingSignificant == that.arrayOrderingSignificant &&
+                Objects.equals(watchProjection, that.watchProjection) &&
+                Objects.equals(includeProjection, that.includeProjection);
     }
-    
+
     @Override
     public int hashCode() {
-        return Objects.hash(watchProjection, includeProjection);
+        return Objects.hash(watchProjection, includeProjection, arrayOrderingSignificant);
     }
-    
+
     @Override
     public String toString() {
         return "NotificationHookConfiguration{" +
-            "watchProjection=" + watchProjection +
-            ", includeProjection=" + includeProjection +
-            '}';
+                "watchProjection=" + watchProjection +
+                ", includeProjection=" + includeProjection +
+                ", arrayOrderingSignificant=" + arrayOrderingSignificant +
+                '}';
     }
 }
