@@ -75,6 +75,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                             HookConfiguration hookConfiguration,
                             List<HookDoc> hookDocs) {
         if (hookConfiguration == null) {
+            LOGGER.warn("No notificationHook configuration provided, assuming you want to watch "
+                    + "all fields and include only IDs.");
             hookConfiguration = NotificationHookConfiguration.watchingEverythingAndIncludingNothing();
         } else if (!(hookConfiguration instanceof NotificationHookConfiguration)) {
             throw new IllegalArgumentException("Expected instance of " +
