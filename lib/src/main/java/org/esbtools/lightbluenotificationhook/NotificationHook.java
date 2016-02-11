@@ -240,6 +240,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     // TODO(ahenning): This messiness can be removed if we can inject the lightblue factory in
     // the parser instead of the hook. Then hook can accept mediator in constructor and we only
     // validate it is non null and that's it.
+    // See: https://github.com/lightblue-platform/lightblue-core/pull/587
     protected Mediator tryGetMediator() {
         if (mediator != null) {
             return mediator;
