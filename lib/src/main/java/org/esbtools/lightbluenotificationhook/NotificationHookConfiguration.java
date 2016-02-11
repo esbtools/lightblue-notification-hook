@@ -2,7 +2,9 @@ package org.esbtools.lightbluenotificationhook;
 
 import com.redhat.lightblue.metadata.HookConfiguration;
 import com.redhat.lightblue.metadata.parser.MetadataParser;
+import com.redhat.lightblue.query.FieldProjection;
 import com.redhat.lightblue.query.Projection;
+import com.redhat.lightblue.util.Path;
 
 import java.util.Objects;
 
@@ -23,6 +25,9 @@ import java.util.Objects;
  * ignored. Default is false.
  */
 public class NotificationHookConfiguration implements HookConfiguration {
+    private static final Projection ALL_FIELDS = new FieldProjection(new Path("*"), true, true);
+    private static final Projection NO_FIELDS = new FieldProjection(new Path("*"), false, false);
+
     private final Projection watchProjection;
     private final Projection includeProjection;
     private final boolean arrayOrderingSignificant;
@@ -33,6 +38,10 @@ public class NotificationHookConfiguration implements HookConfiguration {
         this.watchProjection = watchProjection;
         this.includeProjection = includeProjection;
         this.arrayOrderingSignificant = arrayOrderingSignificant;
+    }
+
+    public static NotificationHookConfiguration watchingEverythingAndIncludingNothing() {
+        return new NotificationHookConfiguration(null, null, false);
     }
 
     public static <T> NotificationHookConfiguration fromMetadata(MetadataParser<T> parser,
@@ -47,11 +56,11 @@ public class NotificationHookConfiguration implements HookConfiguration {
     }
     
     public Projection watchProjection() {
-        return watchProjection;
+        return watchProjection != null ? watchProjection : ALL_FIELDS;
     }
     
     public Projection includeProjection() {
-        return includeProjection;
+        return includeProjection != null ? includeProjection : NO_FIELDS;
     }
 
     public boolean isArrayOrderingSignificant() {
