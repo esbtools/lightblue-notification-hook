@@ -226,6 +226,22 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         Assert.assertNull(insertCapturingMediator.capturedInsert);
     }
 
+    @Test
+    public void shouldFallBackToWatchingEverythingAndIncludingNothingIfNoConfigurationProvided() throws Exception {
+        EntityMetadata md = getMd("usermd.json");
+        JsonNode pre = loadJsonNode("userdata.json");
+        JsonNode post = loadJsonNode("userdata.json");
+        JsonDoc.modify(post, new Path("login"), JsonNodeFactory.instance.textNode("blah"), true);
+
+        List<HookDoc> docs= new ArrayList<>();
+        HookDoc doc = new HookDoc(md, new JsonDoc(pre), new JsonDoc(post), CRUDOperation.UPDATE, "me");
+        docs.add(doc);
+
+        hook.processHook(md, /* config */ null, docs);
+
+        Assert.assertNotNull(insertCapturingMediator.capturedInsert);
+    }
+
     private void assertEntityDataValueEquals(ArrayNode ed, String path, String value) {
         int n=ed.size();
         for(int i=0;i<n;i++) {

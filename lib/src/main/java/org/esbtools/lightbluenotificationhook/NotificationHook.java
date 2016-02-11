@@ -74,7 +74,9 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     public void processHook(EntityMetadata entityMetadata,
                             HookConfiguration hookConfiguration,
                             List<HookDoc> hookDocs) {
-        if (!(hookConfiguration instanceof NotificationHookConfiguration)) {
+        if (hookConfiguration == null) {
+            hookConfiguration = NotificationHookConfiguration.watchingEverythingAndIncludingNothing();
+        } else if (!(hookConfiguration instanceof NotificationHookConfiguration)) {
             throw new IllegalArgumentException("Expected instance of " +
                     "NotificationHookConfiguration but got: " + hookConfiguration);
         }

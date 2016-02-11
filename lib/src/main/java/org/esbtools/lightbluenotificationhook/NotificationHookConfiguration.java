@@ -6,6 +6,7 @@ import com.redhat.lightblue.query.FieldProjection;
 import com.redhat.lightblue.query.Projection;
 import com.redhat.lightblue.util.Path;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -28,6 +29,9 @@ public class NotificationHookConfiguration implements HookConfiguration {
     private static final Projection ALL_FIELDS = new FieldProjection(new Path("*"), true, true);
     private static final Projection NO_FIELDS = new FieldProjection(new Path("*"), false, false);
 
+    private static final NotificationHookConfiguration WATCHING_EVERYTHING_INCLUDING_NOTHING
+            = new NotificationHookConfiguration(null, null, false);
+
     private final Projection watchProjection;
     private final Projection includeProjection;
     private final boolean arrayOrderingSignificant;
@@ -41,11 +45,15 @@ public class NotificationHookConfiguration implements HookConfiguration {
     }
 
     public static NotificationHookConfiguration watchingEverythingAndIncludingNothing() {
-        return new NotificationHookConfiguration(null, null, false);
+        return WATCHING_EVERYTHING_INCLUDING_NOTHING;
     }
 
     public static <T> NotificationHookConfiguration fromMetadata(MetadataParser<T> parser,
-                                                                 T parseMe) {
+                                                                 @Nullable T parseMe) {
+        if (parseMe == null) {
+            return watchingEverythingAndIncludingNothing();
+        }
+
         Projection watchProjection = parser.getProjection(parseMe, "watchProjection");
         Projection includeProjection = parser.getProjection(parseMe, "includeProjection");
         Object b=parser.getValueProperty(parseMe, "arrayOrderingSignificant");        
