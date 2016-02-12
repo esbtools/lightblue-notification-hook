@@ -30,17 +30,23 @@ public class NotificationHookConfiguration implements HookConfiguration {
     private static final Projection NO_FIELDS = new FieldProjection(new Path("*"), false, false);
 
     private static final NotificationHookConfiguration WATCHING_EVERYTHING_INCLUDING_NOTHING
-            = new NotificationHookConfiguration(null, null, false);
+            = new NotificationHookConfiguration(ALL_FIELDS, NO_FIELDS, false);
 
     private final Projection watchProjection;
     private final Projection includeProjection;
     private final boolean arrayOrderingSignificant;
 
-    public NotificationHookConfiguration(Projection watchProjection,
-                                         Projection includeProjection,
+    /**
+     * @param watchProjection If null, defaults to watching all fields.
+     * @param includeProjection If null, defaults to including no fields.
+     * @param arrayOrderingSignificant If an array has the same elements in different order, does
+     * this count as a change?
+     */
+    public NotificationHookConfiguration(@Nullable Projection watchProjection,
+                                         @Nullable Projection includeProjection,
                                          boolean arrayOrderingSignificant) {
-        this.watchProjection = watchProjection;
-        this.includeProjection = includeProjection;
+        this.watchProjection = watchProjection != null ? watchProjection : ALL_FIELDS;
+        this.includeProjection = includeProjection != null ? includeProjection : NO_FIELDS;
         this.arrayOrderingSignificant = arrayOrderingSignificant;
     }
 
@@ -64,11 +70,11 @@ public class NotificationHookConfiguration implements HookConfiguration {
     }
     
     public Projection watchProjection() {
-        return watchProjection != null ? watchProjection : ALL_FIELDS;
+        return watchProjection;
     }
     
     public Projection includeProjection() {
-        return includeProjection != null ? includeProjection : NO_FIELDS;
+        return includeProjection;
     }
 
     public boolean isArrayOrderingSignificant() {
@@ -76,12 +82,9 @@ public class NotificationHookConfiguration implements HookConfiguration {
     }
 
     public <T> void toMetadata(MetadataParser<T> parser, T writeMe) {
-        if(watchProjection!=null)
-            parser.putProjection(writeMe, "watchProjection", watchProjection);
-        if(includeProjection!=null)
-            parser.putProjection(writeMe, "includeProjection", includeProjection);
-        if(arrayOrderingSignificant)
-            parser.putValue(writeMe,"arrayOrderingSignificant",Boolean.TRUE);
+        parser.putProjection(writeMe, "watchProjection", watchProjection);
+        parser.putProjection(writeMe, "includeProjection", includeProjection);
+        parser.putValue(writeMe,"arrayOrderingSignificant",Boolean.TRUE);
     }
 
     @Override
