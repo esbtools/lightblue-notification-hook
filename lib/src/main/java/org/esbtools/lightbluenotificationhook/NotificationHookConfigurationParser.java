@@ -26,7 +26,9 @@ public class NotificationHookConfigurationParser<T> implements HookConfiguration
 
     @Override
     public void convert(MetadataParser<T> parser, T writeMe, HookConfiguration hookConfiguration) {
-        if (!(hookConfiguration instanceof NotificationHookConfiguration)) {
+        if (hookConfiguration == null) {
+            hookConfiguration = NotificationHookConfiguration.watchingEverythingAndIncludingNothing();
+        } else if (!(hookConfiguration instanceof NotificationHookConfiguration)) {
             throw new IllegalArgumentException("Can only parse NotificationHookConfiguration but " +
                     "got: " + hookConfiguration);
         }

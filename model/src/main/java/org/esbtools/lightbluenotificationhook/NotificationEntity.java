@@ -44,7 +44,7 @@ public class NotificationEntity {
     private static final String LIGHTBLUE_DATE_FORMAT = "yyyyMMdd\'T\'HH:mm:ss.SSSZ";
 
     public enum Operation {
-        INSERT, UPDATE
+        insert, update
     }
 
     public String get_id() {

@@ -2,8 +2,11 @@ package org.esbtools.lightbluenotificationhook;
 
 import com.redhat.lightblue.metadata.HookConfiguration;
 import com.redhat.lightblue.metadata.parser.MetadataParser;
+import com.redhat.lightblue.query.FieldProjection;
 import com.redhat.lightblue.query.Projection;
+import com.redhat.lightblue.util.Path;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -23,20 +26,40 @@ import java.util.Objects;
  * ignored. Default is false.
  */
 public class NotificationHookConfiguration implements HookConfiguration {
+    private static final Projection ALL_FIELDS = new FieldProjection(new Path("*"), true, true);
+    private static final Projection NO_FIELDS = new FieldProjection(new Path("*"), false, false);
+
+    private static final NotificationHookConfiguration WATCHING_EVERYTHING_INCLUDING_NOTHING
+            = new NotificationHookConfiguration(ALL_FIELDS, NO_FIELDS, false);
+
     private final Projection watchProjection;
     private final Projection includeProjection;
     private final boolean arrayOrderingSignificant;
 
-    public NotificationHookConfiguration(Projection watchProjection,
-                                         Projection includeProjection,
+    /**
+     * @param watchProjection If null, defaults to watching all fields.
+     * @param includeProjection If null, defaults to including no fields.
+     * @param arrayOrderingSignificant If an array has the same elements in different order, does
+     * this count as a change?
+     */
+    public NotificationHookConfiguration(@Nullable Projection watchProjection,
+                                         @Nullable Projection includeProjection,
                                          boolean arrayOrderingSignificant) {
-        this.watchProjection = watchProjection;
-        this.includeProjection = includeProjection;
+        this.watchProjection = watchProjection != null ? watchProjection : ALL_FIELDS;
+        this.includeProjection = includeProjection != null ? includeProjection : NO_FIELDS;
         this.arrayOrderingSignificant = arrayOrderingSignificant;
     }
 
+    public static NotificationHookConfiguration watchingEverythingAndIncludingNothing() {
+        return WATCHING_EVERYTHING_INCLUDING_NOTHING;
+    }
+
     public static <T> NotificationHookConfiguration fromMetadata(MetadataParser<T> parser,
-                                                                 T parseMe) {
+                                                                 @Nullable T parseMe) {
+        if (parseMe == null) {
+            return watchingEverythingAndIncludingNothing();
+        }
+
         Projection watchProjection = parser.getProjection(parseMe, "watchProjection");
         Projection includeProjection = parser.getProjection(parseMe, "includeProjection");
         Object b=parser.getValueProperty(parseMe, "arrayOrderingSignificant");        
@@ -59,12 +82,9 @@ public class NotificationHookConfiguration implements HookConfiguration {
     }
 
     public <T> void toMetadata(MetadataParser<T> parser, T writeMe) {
-        if(watchProjection!=null)
-            parser.putProjection(writeMe, "watchProjection", watchProjection);
-        if(includeProjection!=null)
-            parser.putProjection(writeMe, "includeProjection", includeProjection);
-        if(arrayOrderingSignificant)
-            parser.putValue(writeMe,"arrayOrderingSignificant",Boolean.TRUE);
+        parser.putProjection(writeMe, "watchProjection", watchProjection);
+        parser.putProjection(writeMe, "includeProjection", includeProjection);
+        parser.putValue(writeMe,"arrayOrderingSignificant",Boolean.TRUE);
     }
 
     @Override

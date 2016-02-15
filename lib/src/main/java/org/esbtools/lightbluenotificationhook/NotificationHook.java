@@ -1,13 +1,11 @@
 package org.esbtools.lightbluenotificationhook;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.redhat.lightblue.DataError;
 import com.redhat.lightblue.EntityVersion;
 import com.redhat.lightblue.Response;
 import com.redhat.lightblue.config.LightblueFactory;
 import com.redhat.lightblue.config.LightblueFactoryAware;
+import com.redhat.lightblue.crud.CRUDOperation;
 import com.redhat.lightblue.crud.InsertionRequest;
 import com.redhat.lightblue.eval.Projector;
 import com.redhat.lightblue.hooks.CRUDHook;
@@ -16,46 +14,50 @@ import com.redhat.lightblue.mediator.Mediator;
 import com.redhat.lightblue.metadata.EntityMetadata;
 import com.redhat.lightblue.metadata.Field;
 import com.redhat.lightblue.metadata.HookConfiguration;
+import com.redhat.lightblue.util.DocComparator;
 import com.redhat.lightblue.util.Error;
+import com.redhat.lightblue.util.JsonCompare;
 import com.redhat.lightblue.util.JsonDoc;
 import com.redhat.lightblue.util.JsonNodeCursor;
 import com.redhat.lightblue.util.Path;
-import com.redhat.lightblue.util.JsonCompare;
-import com.redhat.lightblue.util.DocComparator;
-import com.redhat.lightblue.query.Projection;
-import com.redhat.lightblue.query.FieldProjection;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ContainerNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class NotificationHook implements CRUDHook, LightblueFactoryAware {
-
-    private static final Projection ALL_FIELDS=new FieldProjection(new Path("*"),true,true);
-    private static final Projection NO_FIELDS=new FieldProjection(new Path("*"),false,false);
     
     private final String name;
     private final JsonNodeFactory jsonNodeFactory;
     private final ObjectMapper objectMapper;
 
-    private LightblueFactory lightblueFactory;
+    private @Nullable LightblueFactory lightblueFactory;
+    private @Nullable Mediator mediator;
 
     private static final Logger LOGGER=LoggerFactory.getLogger(NotificationHook.class);
 
     public NotificationHook(String name) {
-        this(name, new ObjectMapper(), JsonNodeFactory.withExactBigDecimals(true));
+        this(name, null);
+    }
+
+    public NotificationHook(String name, Mediator mediator) {
+        this(name, new ObjectMapper(), JsonNodeFactory.withExactBigDecimals(true), mediator);
     }
 
     public NotificationHook(String name, ObjectMapper objectMapper,
-            JsonNodeFactory jsonNodeFactory) {
+            JsonNodeFactory jsonNodeFactory, Mediator mediator) {
         this.name = name;
         this.jsonNodeFactory = jsonNodeFactory;
         this.objectMapper = objectMapper;
+        this.mediator = mediator;
     }
 
     @Override
@@ -72,7 +74,11 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     public void processHook(EntityMetadata entityMetadata,
                             HookConfiguration hookConfiguration,
                             List<HookDoc> hookDocs) {
-        if (!(hookConfiguration instanceof NotificationHookConfiguration)) {
+        if (hookConfiguration == null) {
+            LOGGER.warn("No notificationHook configuration provided, assuming you want to watch "
+                    + "all fields and include only IDs.");
+            hookConfiguration = NotificationHookConfiguration.watchingEverythingAndIncludingNothing();
+        } else if (!(hookConfiguration instanceof NotificationHookConfiguration)) {
             throw new IllegalArgumentException("Expected instance of " +
                     "NotificationHookConfiguration but got: " + hookConfiguration);
         }
@@ -80,9 +86,9 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         NotificationHookConfiguration config = (NotificationHookConfiguration) hookConfiguration;
         Mediator mediator = tryGetMediator();
 
-        Projector watchProjector = Projector.getInstance(config.watchProjection()==null?ALL_FIELDS:config.watchProjection(), entityMetadata);
-        Projector includeProjector = Projector.getInstance(config.includeProjection()==null?NO_FIELDS:config.includeProjection(),
-                                                           entityMetadata);
+        Projector watchProjector = Projector.getInstance(config.watchProjection(), entityMetadata);
+        Projector includeProjector = Projector.getInstance(config.includeProjection(), entityMetadata);
+
         for (HookDoc hookDoc : hookDocs) {
             HookResult result = processSingleHookDoc(entityMetadata,
                                                      watchProjector,
@@ -108,8 +114,9 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         LOGGER.debug("Processing doc starts");
         JsonDoc postDoc = hookDoc.getPostDoc();
         JsonDoc preDoc = hookDoc.getPreDoc();
-        
-        if (postDoc == null) {
+
+        // TODO(ahenning): Support delete
+        if (hookDoc.getCRUDOperation().equals(CRUDOperation.FIND) || postDoc == null) {
             return HookResult.aborted();
         }
 
@@ -214,11 +221,12 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         }
         
         notificationEntity.setEntityData(data);
-        
+
+        // TODO(ahenning): Support delete
         NotificationEntity.Operation operation = hookDoc.getPreDoc() == null
-            ? NotificationEntity.Operation.INSERT
-            : NotificationEntity.Operation.UPDATE;
-        
+            ? NotificationEntity.Operation.insert
+            : NotificationEntity.Operation.update;
+
         notificationEntity.setEntityName(metadata.getName());
         notificationEntity.setEntityVersion(metadata.getVersion().getValue());
         notificationEntity.setOperation(operation);
@@ -229,11 +237,29 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         return notificationEntity;
     }
 
+    // TODO(ahenning): This messiness can be removed if we can inject the lightblue factory in
+    // the parser instead of the hook. Then hook can accept mediator in constructor and we only
+    // validate it is non null and that's it.
+    // See: https://github.com/lightblue-platform/lightblue-core/pull/587
     protected Mediator tryGetMediator() {
-        try {
-            return lightblueFactory.getMediator();
-        } catch (Exception e) {
-            throw new IllegalStateException("Unable to get Mediator from LightblueFactory!", e);
+        if (mediator != null) {
+            return mediator;
+        }
+
+        synchronized (this) {
+            if (mediator != null) {
+                return mediator;
+            }
+
+            if (lightblueFactory == null) {
+                throw new IllegalStateException("No Mediator or LightblueFactory provided!");
+            }
+
+            try {
+                return mediator = lightblueFactory.getMediator();
+            } catch (Exception e) {
+                throw new IllegalStateException("Unable to get Mediator from LightblueFactory!", e);
+            }
         }
     }
 
