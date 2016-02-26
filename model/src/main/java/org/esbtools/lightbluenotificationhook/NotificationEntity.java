@@ -30,7 +30,7 @@ public class NotificationEntity {
     private String _id;
     private String entityName;
     private String entityVersion;
-     private Status status;
+    private Status status;
     private Operation operation;
     private String triggeredByUser;
     // TODO: Would like to use JDK8 date types, but with lightblue's included version
