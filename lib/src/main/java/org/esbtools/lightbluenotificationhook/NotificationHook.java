@@ -120,69 +120,61 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             return HookResult.aborted();
         }
 
-        if (watchedFieldsHaveChanged(metadata,preDoc, postDoc, watchProjector, arrayOrderingSignificant)) {
-            LOGGER.debug("Watched fields changed, creating notification");
-            NotificationEntity notification =
-                makeNotificationEntityWithIncludedFields(hookDoc, includeProjector);
-
-            EntityVersion notificationVersion = new EntityVersion(
-                    NotificationEntity.ENTITY_NAME,
-                    NotificationEntity.ENTITY_VERSION);
-
-            InsertionRequest newNotification = new InsertionRequest();
-
-            newNotification.setEntityVersion(notificationVersion);
-            newNotification.setEntityData(objectMapper.valueToTree(notification));
-
-            LOGGER.debug("Inserting notification");
-            Response response = mediator.insert(newNotification);
-
-            return new HookResult(notification, response.getErrors(), response.getDataErrors());
+        DocComparator.Difference<JsonNode> diff=compareDocs(metadata,preDoc,postDoc,watchProjector);
+        if(!diff.same()) {
+            if(diff.getNumChangedFields()>0 || arrayOrderingSignificant) {                
+                LOGGER.debug("Watched fields changed, creating notification");
+                NotificationEntity notification =
+                    makeNotificationEntityWithIncludedFields(hookDoc, includeProjector, diff, arrayOrderingSignificant);
+                
+                EntityVersion notificationVersion = new EntityVersion(NotificationEntity.ENTITY_NAME,
+                                                                      NotificationEntity.ENTITY_VERSION);
+                
+                InsertionRequest newNotification = new InsertionRequest();
+                
+                newNotification.setEntityVersion(notificationVersion);
+                newNotification.setEntityData(objectMapper.valueToTree(notification));
+                
+                LOGGER.debug("Inserting notification");
+                Response response = mediator.insert(newNotification);
+                
+                return new HookResult(notification, response.getErrors(), response.getDataErrors());
+            }
         }
 
         return HookResult.aborted();
     }
 
     /**
-     * Determines if any of the watched fields have changed. If
-     * arrayOrderingSignificant is true, also checks if array
-     * orderings also changed.
+     * Compares the pre- and post- documents after they are passed
+     * through the watchProjector, and returns the delta
      */
-    private boolean watchedFieldsHaveChanged(EntityMetadata metadata,
-                                             JsonDoc preDoc,
-                                             JsonDoc postDoc,
-                                             Projector watchProjector,
-                                             boolean arrayOrderingSignificant) {
+    private DocComparator.Difference<JsonNode> compareDocs(EntityMetadata metadata,
+                                                           JsonDoc preDoc,
+                                                           JsonDoc postDoc,
+                                                           Projector watchProjector) {
         JsonDoc watchedPostDoc = watchProjector.project(postDoc, jsonNodeFactory);
         JsonDoc watchedPreDoc = preDoc == null
             ? new JsonDoc(jsonNodeFactory.objectNode())
             : watchProjector.project(preDoc, jsonNodeFactory);
-
+        
         // Compute diff
         JsonCompare cmp=metadata.getDocComparator();
         try {
-            DocComparator.Difference diff=cmp.compareNodes(watchedPreDoc.getRoot(),watchedPostDoc.getRoot());
+            DocComparator.Difference<JsonNode> diff=cmp.
+                compareNodes(watchedPreDoc.getRoot(),watchedPostDoc.getRoot());
             LOGGER.debug("Diff: {}",diff);
-            if(!diff.same()) {
-                if(diff.getNumChangedFields()>0) {
-                    return true;
-                } else {
-                    // Are there any array element moves?
-                    // Do we care?
-                    if(!diff.getDelta().isEmpty()&&arrayOrderingSignificant) {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return diff;
         } catch (Exception e) {
             LOGGER.error("Error processing notification",e);
-            return false;
-        }
+            return null;
+       }
     }
 
     private NotificationEntity makeNotificationEntityWithIncludedFields(HookDoc hookDoc,
-                                                                        Projector includeProjector) {
+                                                                        Projector includeProjector,
+                                                                        DocComparator.Difference<JsonNode> diff,
+                                                                        boolean arrayOrderSignificant) {
         EntityMetadata metadata = hookDoc.getEntityMetadata();
         JsonDoc postDoc = hookDoc.getPostDoc();
 
@@ -219,7 +211,29 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 data.add(new NotificationEntity.PathAndValue(pathString, valueString));
             }
         }
-        
+        List<String> changedPaths=new ArrayList<>();
+        List<NotificationEntity.PathAndValue> removedPaths=new ArrayList<>();
+        for(DocComparator.Delta<JsonNode> delta:diff.getDelta()) {
+            if( (delta instanceof DocComparator.Move && arrayOrderSignificant) ||
+                !(delta instanceof DocComparator.Move) ) {
+
+                if(delta instanceof DocComparator.Removal) {
+                    removedPaths.add(new NotificationEntity.
+                                     PathAndValue(delta.getField().toString(),
+                                                  ((DocComparator.Removal)delta).
+                                                  getRemovedNode().toString()));
+                } else {
+                    if(delta instanceof DocComparator.Move) {
+                        // Add the new path to the changedPaths
+                        changedPaths.add(delta.getField2().toString());
+                    } else {
+                        changedPaths.add(delta.getField().toString());
+                    }
+                }
+            }
+        }
+        notificationEntity.setChangedPaths(changedPaths);
+        notificationEntity.setRemovedPaths(removedPaths);
         notificationEntity.setEntityData(data);
 
         // TODO(ahenning): Support delete
