@@ -98,7 +98,9 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                                                      mediator);
             
             // TODO: batch
-            if (result.hasErrorsOrDataErrors()) {
+            if(result.hasException()) {
+                throw new NotificationProcessingError(result.exception);
+            } else if (result.hasErrorsOrDataErrors()) {                
                 throw new NotificationInsertErrorsException(result.entity, result.errors,
                                                             result.dataErrors);
             }
@@ -144,8 +146,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             }
         } catch (Exception e) {
             LOGGER.error("Error processing hook:"+e);
+            return HookResult.exception(e);
         }
-
         return HookResult.aborted();
     }
 
@@ -281,20 +283,35 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         final NotificationEntity entity;
         final List<Error> errors;
         final List<DataError> dataErrors;
+        final Exception exception;
 
         static HookResult aborted() {
             return new HookResult(null, Collections.<Error>emptyList(),
-                    Collections.<DataError>emptyList());
+                                  Collections.<DataError>emptyList(),null);
         }
 
-        HookResult(NotificationEntity entity, List<Error> errors, List<DataError> dataErrors) {
+        static HookResult exception(Exception x) {
+            return new HookResult(null, Collections.<Error>emptyList(),
+                                  Collections.<DataError>emptyList(),x);
+        }
+
+        HookResult(NotificationEntity entity, List<Error> errors, List<DataError> dataErrors, Exception exception) {
             this.entity = entity;
             this.errors = errors;
             this.dataErrors = dataErrors;
+            this.exception = exception;
+        }
+
+        HookResult(NotificationEntity entity, List<Error> errors, List<DataError> dataErrors) {
+            this(entity,errors,dataErrors,null);
         }
 
         boolean hasErrorsOrDataErrors() {
             return !errors.isEmpty() || !dataErrors.isEmpty();
+        }
+
+        boolean hasException() {
+            return exception!=null;
         }
     }
 }
