@@ -120,26 +120,30 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             return HookResult.aborted();
         }
 
-        DocComparator.Difference<JsonNode> diff=compareDocs(metadata,preDoc,postDoc,watchProjector);
-        if(!diff.same()) {
-            if(diff.getNumChangedFields()>0 || arrayOrderingSignificant) {                
-                LOGGER.debug("Watched fields changed, creating notification");
-                NotificationEntity notification =
-                    makeNotificationEntityWithIncludedFields(hookDoc, includeProjector, diff, arrayOrderingSignificant);
-                
-                EntityVersion notificationVersion = new EntityVersion(NotificationEntity.ENTITY_NAME,
-                                                                      NotificationEntity.ENTITY_VERSION);
-                
-                InsertionRequest newNotification = new InsertionRequest();
-                
-                newNotification.setEntityVersion(notificationVersion);
-                newNotification.setEntityData(objectMapper.valueToTree(notification));
-                
-                LOGGER.debug("Inserting notification");
-                Response response = mediator.insert(newNotification);
-                
-                return new HookResult(notification, response.getErrors(), response.getDataErrors());
+        try {
+            DocComparator.Difference<JsonNode> diff=compareDocs(metadata,preDoc,postDoc,watchProjector);
+            if(!diff.same()) {
+                if(diff.getNumChangedFields()>0 || arrayOrderingSignificant) {                
+                    LOGGER.debug("Watched fields changed, creating notification");
+                    NotificationEntity notification =
+                        makeNotificationEntityWithIncludedFields(hookDoc, includeProjector, diff, arrayOrderingSignificant);
+                    
+                    EntityVersion notificationVersion = new EntityVersion(NotificationEntity.ENTITY_NAME,
+                                                                          NotificationEntity.ENTITY_VERSION);
+                    
+                    InsertionRequest newNotification = new InsertionRequest();
+                    
+                    newNotification.setEntityVersion(notificationVersion);
+                    newNotification.setEntityData(objectMapper.valueToTree(notification));
+                    
+                    LOGGER.debug("Inserting notification");
+                    Response response = mediator.insert(newNotification);
+                    
+                    return new HookResult(notification, response.getErrors(), response.getDataErrors());
+                }
             }
+        } catch (Exception e) {
+            LOGGER.error("Error processing hook:"+e);
         }
 
         return HookResult.aborted();
@@ -152,7 +156,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     private DocComparator.Difference<JsonNode> compareDocs(EntityMetadata metadata,
                                                            JsonDoc preDoc,
                                                            JsonDoc postDoc,
-                                                           Projector watchProjector) {
+                                                           Projector watchProjector)
+        throws Exception {
         JsonDoc watchedPostDoc = watchProjector.project(postDoc, jsonNodeFactory);
         JsonDoc watchedPreDoc = preDoc == null
             ? new JsonDoc(jsonNodeFactory.objectNode())
@@ -160,15 +165,10 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         
         // Compute diff
         JsonCompare cmp=metadata.getDocComparator();
-        try {
-            DocComparator.Difference<JsonNode> diff=cmp.
-                compareNodes(watchedPreDoc.getRoot(),watchedPostDoc.getRoot());
-            LOGGER.debug("Diff: {}",diff);
-            return diff;
-        } catch (Exception e) {
-            LOGGER.error("Error processing notification",e);
-            return null;
-       }
+        DocComparator.Difference<JsonNode> diff=cmp.
+            compareNodes(watchedPreDoc.getRoot(),watchedPostDoc.getRoot());
+        LOGGER.debug("Diff: {}",diff);
+        return diff;
     }
 
     private NotificationEntity makeNotificationEntityWithIncludedFields(HookDoc hookDoc,
@@ -233,7 +233,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             }
         }
         notificationEntity.setChangedPaths(changedPaths);
-        notificationEntity.setRemovedPaths(removedPaths);
+        notificationEntity.setRemovedEntityData(removedPaths);
         notificationEntity.setEntityData(data);
 
         // TODO(ahenning): Support delete
