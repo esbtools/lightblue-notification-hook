@@ -84,7 +84,7 @@ public class NotificationHookConfiguration implements HookConfiguration {
     public <T> void toMetadata(MetadataParser<T> parser, T writeMe) {
         parser.putProjection(writeMe, "watchProjection", watchProjection);
         parser.putProjection(writeMe, "includeProjection", includeProjection);
-        parser.putValue(writeMe,"arrayOrderingSignificant",Boolean.TRUE);
+        parser.putValue(writeMe,"arrayOrderingSignificant", arrayOrderingSignificant);
     }
 
     @Override
