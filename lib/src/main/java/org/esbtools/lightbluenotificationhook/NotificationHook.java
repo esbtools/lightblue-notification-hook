@@ -223,10 +223,15 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 !(delta instanceof DocComparator.Move) ) {
 
                 if(delta instanceof DocComparator.Removal) {
-                    flatten(delta.getField().toString(),
-                            ((DocComparator.Removal<JsonNode>)delta).getRemovedNode(),
-                            removedPaths,
-                            removedElements);
+                    JsonNode removedNode=((DocComparator.Removal<JsonNode>)delta).getRemovedNode();
+                    if(removedNode.isContainerNode()) {
+                        removedElements.add(delta.getField().toString());
+                        flatten(delta.getField().toString(),
+                                ((DocComparator.Removal<JsonNode>)delta).getRemovedNode(),
+                                removedPaths);
+                    } else {
+                        removedPaths.add(new NotificationEntity.PathAndValue(delta.getField().toString(),removedNode.asText()));
+                    }
                 } else {
                     if(delta instanceof DocComparator.Move) {
                         // Add the new path to the changedPaths
@@ -239,6 +244,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         }
         notificationEntity.setChangedPaths(changedPaths);
         notificationEntity.setRemovedEntityData(removedPaths);
+        notificationEntity.setRemovedElements(removedElements);
         notificationEntity.setEntityData(data);
 
         // TODO(ahenning): Support delete
@@ -257,17 +263,14 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     }
 
     private void flatten(String prefix,JsonNode node,
-                         List<NotificationEntity.PathAndValue> removedPaths,
-                         List<String> removedElements) {
+                         List<NotificationEntity.PathAndValue> removedPaths) {
         JsonNodeCursor cursor=new JsonNodeCursor(Path.EMPTY,node);
         while(cursor.next()) {
             String p=cursor.getCurrentPath().toString();
             JsonNode value=cursor.getCurrentNode();
             if(value.isValueNode()) {
                 removedPaths.add(new NotificationEntity.PathAndValue(prefix.isEmpty()?p:(prefix+"."+p),value.asText()));
-            } else {
-                removedElements.add(prefix.isEmpty()?p:(prefix+"."+p));
-            }
+            } 
         }
     }
 

@@ -259,8 +259,36 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
                 false);
 
         hook.processHook(md, cfg, docs);
-        System.out.println(insertCapturingMediator.capturedInsert);
         Assert.assertNotNull(insertCapturingMediator.capturedInsert);
+        JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
+        Assert.assertEquals("sites.0.streetAddress.city",data.get("changedPaths").get(0).asText());
+        Assert.assertEquals(1,data.get("changedPaths").size());
+    }
+
+    @Test
+    public void arrayElementRemoval() throws Exception {
+        EntityMetadata md = getMd("usermd.json");
+        JsonNode pre = loadJsonNode("userdata.json");
+        JsonNode post = loadJsonNode("userdata.json");
+        JsonDoc.modify(post,new Path("sites.1"),null,true);
+
+        List<HookDoc> docs= new ArrayList<>();
+        HookDoc doc = new HookDoc(md, new JsonDoc(pre), new JsonDoc(post), CRUDOperation.UPDATE, "me");
+        docs.add(doc);
+        
+        HookConfiguration cfg = new NotificationHookConfiguration(
+                projection("{'field':'sites','recursive':1}"),
+                projection("{'field':'sites','recursive':1}"),
+                false);
+
+        hook.processHook(md, cfg, docs);        
+        JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
+        Assert.assertEquals(1,data.get("removedElements").size());
+        Assert.assertEquals("sites.1",data.get("removedElements").get(0).asText());
+
+        // Check we also have sites.1 contents
+        assertEntityDataValueEquals( (ArrayNode)data.get("removedEntityData"),"sites.1.siteId","2");
+        assertEntityDataValueEquals( (ArrayNode)data.get("removedEntityData"),"sites.1.siteType","billing");
     }
 
     private void assertEntityDataValueEquals(ArrayNode ed, String path, String value) {
