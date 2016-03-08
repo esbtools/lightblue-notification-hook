@@ -42,6 +42,7 @@ public class NotificationEntity {
     private List<PathAndValue> entityData;
     private List<String> changedPaths;
     private List<PathAndValue> removedEntityData;
+    private List<String> removedElements;
 
     private static final String LIGHTBLUE_DATE_FORMAT = "yyyyMMdd\'T\'HH:mm:ss.SSSZ";
 
@@ -145,6 +146,14 @@ public class NotificationEntity {
 
     public void setChangedPaths(List<String> paths) {
         this.changedPaths=paths;
+    }
+
+    public List<String> getRemovedElements() {
+        return removedElements;
+    }
+
+    public void setRemovedElements(List<String> paths) {
+        this.removedElements=paths;
     }
 
     public List<PathAndValue> getRemovedEntityData() {

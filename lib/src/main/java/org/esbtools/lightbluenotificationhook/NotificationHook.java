@@ -217,13 +217,16 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         }
         List<String> changedPaths=new ArrayList<>();
         List<NotificationEntity.PathAndValue> removedPaths=new ArrayList<>();
+        List<String> removedElements=new ArrayList<>();
         for(DocComparator.Delta<JsonNode> delta:diff.getDelta()) {
             if( (delta instanceof DocComparator.Move && arrayOrderSignificant) ||
                 !(delta instanceof DocComparator.Move) ) {
 
                 if(delta instanceof DocComparator.Removal) {
-                    removedPaths.addAll(flatten(delta.getField().toString(),
-                                                ((DocComparator.Removal<JsonNode>)delta).getRemovedNode()));
+                    flatten(delta.getField().toString(),
+                            ((DocComparator.Removal<JsonNode>)delta).getRemovedNode(),
+                            removedPaths,
+                            removedElements);
                 } else {
                     if(delta instanceof DocComparator.Move) {
                         // Add the new path to the changedPaths
@@ -253,17 +256,19 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         return notificationEntity;
     }
 
-    private List<NotificationEntity.PathAndValue> flatten(String prefix,JsonNode node) {
-        List<NotificationEntity.PathAndValue> list=new ArrayList<>();
+    private void flatten(String prefix,JsonNode node,
+                         List<NotificationEntity.PathAndValue> removedPaths,
+                         List<String> removedElements) {
         JsonNodeCursor cursor=new JsonNodeCursor(Path.EMPTY,node);
         while(cursor.next()) {
             String p=cursor.getCurrentPath().toString();
             JsonNode value=cursor.getCurrentNode();
             if(value.isValueNode()) {
-                list.add(new NotificationEntity.PathAndValue(prefix.isEmpty()?p:(prefix+"."+p),value.asText()));
+                removedPaths.add(new NotificationEntity.PathAndValue(prefix.isEmpty()?p:(prefix+"."+p),value.asText()));
+            } else {
+                removedElements.add(prefix.isEmpty()?p:(prefix+"."+p));
             }
         }
-        return list;
     }
 
     // TODO(ahenning): This messiness can be removed if we can inject the lightblue factory in
