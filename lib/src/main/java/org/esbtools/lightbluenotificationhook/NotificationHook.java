@@ -98,7 +98,9 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                                                      mediator);
             
             // TODO: batch
-            if (result.hasErrorsOrDataErrors()) {
+            if(result.hasException()) {
+                throw new NotificationProcessingError(result.exception);
+            } else if (result.hasErrorsOrDataErrors()) {                
                 throw new NotificationInsertErrorsException(result.entity, result.errors,
                                                             result.dataErrors);
             }
@@ -120,69 +122,63 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             return HookResult.aborted();
         }
 
-        if (watchedFieldsHaveChanged(metadata,preDoc, postDoc, watchProjector, arrayOrderingSignificant)) {
-            LOGGER.debug("Watched fields changed, creating notification");
-            NotificationEntity notification =
-                makeNotificationEntityWithIncludedFields(hookDoc, includeProjector);
-
-            EntityVersion notificationVersion = new EntityVersion(
-                    NotificationEntity.ENTITY_NAME,
-                    NotificationEntity.ENTITY_VERSION);
-
-            InsertionRequest newNotification = new InsertionRequest();
-
-            newNotification.setEntityVersion(notificationVersion);
-            newNotification.setEntityData(objectMapper.valueToTree(notification));
-
-            LOGGER.debug("Inserting notification");
-            Response response = mediator.insert(newNotification);
-
-            return new HookResult(notification, response.getErrors(), response.getDataErrors());
+        try {
+            DocComparator.Difference<JsonNode> diff=compareDocs(metadata,preDoc,postDoc,watchProjector);
+            if(!diff.same()) {
+                if(diff.getNumChangedFields()>0 || arrayOrderingSignificant) {                
+                    LOGGER.debug("Watched fields changed, creating notification");
+                    NotificationEntity notification =
+                        makeNotificationEntityWithIncludedFields(hookDoc, includeProjector, diff, arrayOrderingSignificant);
+                    
+                    EntityVersion notificationVersion = new EntityVersion(NotificationEntity.ENTITY_NAME,
+                                                                          NotificationEntity.ENTITY_VERSION);
+                    
+                    InsertionRequest newNotification = new InsertionRequest();
+                    
+                    newNotification.setEntityVersion(notificationVersion);
+                    newNotification.setEntityData(objectMapper.valueToTree(notification));
+                    
+                    LOGGER.debug("Inserting notification");
+                    Response response = mediator.insert(newNotification);
+                    
+                    return new HookResult(notification, response.getErrors(), response.getDataErrors());
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error processing hook:"+e);
+            return HookResult.exception(e);
         }
-
         return HookResult.aborted();
     }
 
     /**
-     * Determines if any of the watched fields have changed. If
-     * arrayOrderingSignificant is true, also checks if array
-     * orderings also changed.
+     * Compares the pre- and post- documents after they are passed
+     * through the watchProjector, and returns the delta
      */
-    private boolean watchedFieldsHaveChanged(EntityMetadata metadata,
-                                             JsonDoc preDoc,
-                                             JsonDoc postDoc,
-                                             Projector watchProjector,
-                                             boolean arrayOrderingSignificant) {
+    private DocComparator.Difference<JsonNode> compareDocs(EntityMetadata metadata,
+                                                           JsonDoc preDoc,
+                                                           JsonDoc postDoc,
+                                                           Projector watchProjector)
+        throws Exception {
         JsonDoc watchedPostDoc = watchProjector.project(postDoc, jsonNodeFactory);
         JsonDoc watchedPreDoc = preDoc == null
             ? new JsonDoc(jsonNodeFactory.objectNode())
             : watchProjector.project(preDoc, jsonNodeFactory);
-
+        
         // Compute diff
         JsonCompare cmp=metadata.getDocComparator();
-        try {
-            DocComparator.Difference diff=cmp.compareNodes(watchedPreDoc.getRoot(),watchedPostDoc.getRoot());
-            LOGGER.debug("Diff: {}",diff);
-            if(!diff.same()) {
-                if(diff.getNumChangedFields()>0) {
-                    return true;
-                } else {
-                    // Are there any array element moves?
-                    // Do we care?
-                    if(!diff.getDelta().isEmpty()&&arrayOrderingSignificant) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            LOGGER.error("Error processing notification",e);
-            return false;
-        }
+        LOGGER.debug("Array identities:{}",cmp.getArrayIdentities());
+        LOGGER.debug("Pre:{}, Post:{}",watchedPreDoc.getRoot(),watchedPostDoc.getRoot());
+        DocComparator.Difference<JsonNode> diff=cmp.
+            compareNodes(watchedPreDoc.getRoot(),watchedPostDoc.getRoot());
+        LOGGER.debug("Diff: {}",diff);
+        return diff;
     }
 
     private NotificationEntity makeNotificationEntityWithIncludedFields(HookDoc hookDoc,
-                                                                        Projector includeProjector) {
+                                                                        Projector includeProjector,
+                                                                        DocComparator.Difference<JsonNode> diff,
+                                                                        boolean arrayOrderSignificant) {
         EntityMetadata metadata = hookDoc.getEntityMetadata();
         JsonDoc postDoc = hookDoc.getPostDoc();
 
@@ -219,7 +215,36 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 data.add(new NotificationEntity.PathAndValue(pathString, valueString));
             }
         }
-        
+        List<String> changedPaths=new ArrayList<>();
+        List<NotificationEntity.PathAndValue> removedPaths=new ArrayList<>();
+        List<String> removedElements=new ArrayList<>();
+        for(DocComparator.Delta<JsonNode> delta:diff.getDelta()) {
+            if( (delta instanceof DocComparator.Move && arrayOrderSignificant) ||
+                !(delta instanceof DocComparator.Move) ) {
+
+                if(delta instanceof DocComparator.Removal) {
+                    JsonNode removedNode=((DocComparator.Removal<JsonNode>)delta).getRemovedNode();
+                    if(removedNode.isContainerNode()) {
+                        removedElements.add(delta.getField().toString());
+                        flatten(delta.getField().toString(),
+                                ((DocComparator.Removal<JsonNode>)delta).getRemovedNode(),
+                                removedPaths);
+                    } else {
+                        removedPaths.add(new NotificationEntity.PathAndValue(delta.getField().toString(),removedNode.asText()));
+                    }
+                } else {
+                    if(delta instanceof DocComparator.Move) {
+                        // Add the new path to the changedPaths
+                        changedPaths.add(delta.getField2().toString());
+                    } else {
+                        changedPaths.add(delta.getField().toString());
+                    }
+                }
+            }
+        }
+        notificationEntity.setChangedPaths(changedPaths);
+        notificationEntity.setRemovedEntityData(removedPaths);
+        notificationEntity.setRemovedElements(removedElements);
         notificationEntity.setEntityData(data);
 
         // TODO(ahenning): Support delete
@@ -235,6 +260,18 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         notificationEntity.setStatus(NotificationEntity.Status.unprocessed);
         
         return notificationEntity;
+    }
+
+    private void flatten(String prefix,JsonNode node,
+                         List<NotificationEntity.PathAndValue> removedPaths) {
+        JsonNodeCursor cursor=new JsonNodeCursor(Path.EMPTY,node);
+        while(cursor.next()) {
+            String p=cursor.getCurrentPath().toString();
+            JsonNode value=cursor.getCurrentNode();
+            if(value.isValueNode()) {
+                removedPaths.add(new NotificationEntity.PathAndValue(prefix.isEmpty()?p:(prefix+"."+p),value.asText()));
+            } 
+        }
     }
 
     // TODO(ahenning): This messiness can be removed if we can inject the lightblue factory in
@@ -267,20 +304,35 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         final NotificationEntity entity;
         final List<Error> errors;
         final List<DataError> dataErrors;
+        final Exception exception;
 
         static HookResult aborted() {
             return new HookResult(null, Collections.<Error>emptyList(),
-                    Collections.<DataError>emptyList());
+                                  Collections.<DataError>emptyList(),null);
         }
 
-        HookResult(NotificationEntity entity, List<Error> errors, List<DataError> dataErrors) {
+        static HookResult exception(Exception x) {
+            return new HookResult(null, Collections.<Error>emptyList(),
+                                  Collections.<DataError>emptyList(),x);
+        }
+
+        HookResult(NotificationEntity entity, List<Error> errors, List<DataError> dataErrors, Exception exception) {
             this.entity = entity;
             this.errors = errors;
             this.dataErrors = dataErrors;
+            this.exception = exception;
+        }
+
+        HookResult(NotificationEntity entity, List<Error> errors, List<DataError> dataErrors) {
+            this(entity,errors,dataErrors,null);
         }
 
         boolean hasErrorsOrDataErrors() {
             return !errors.isEmpty() || !dataErrors.isEmpty();
+        }
+
+        boolean hasException() {
+            return exception!=null;
         }
     }
 }

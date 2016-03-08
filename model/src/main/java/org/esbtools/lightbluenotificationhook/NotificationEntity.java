@@ -40,6 +40,9 @@ public class NotificationEntity {
     private Date processingDate;
     private Date processedDate;
     private List<PathAndValue> entityData;
+    private List<String> changedPaths;
+    private List<PathAndValue> removedEntityData;
+    private List<String> removedElements;
 
     private static final String LIGHTBLUE_DATE_FORMAT = "yyyyMMdd\'T\'HH:mm:ss.SSSZ";
 
@@ -135,6 +138,30 @@ public class NotificationEntity {
 
     public void setProcessedDate(Date processedDate) {
         this.processedDate = processedDate;
+    }
+
+    public List<String> getChangedPaths() {
+        return changedPaths;
+    }
+
+    public void setChangedPaths(List<String> paths) {
+        this.changedPaths=paths;
+    }
+
+    public List<String> getRemovedElements() {
+        return removedElements;
+    }
+
+    public void setRemovedElements(List<String> paths) {
+        this.removedElements=paths;
+    }
+
+    public List<PathAndValue> getRemovedEntityData() {
+        return removedEntityData;
+    }
+
+    public void setRemovedEntityData(List<PathAndValue> l) {
+        this.removedEntityData=l;
     }
     
     @Transient
