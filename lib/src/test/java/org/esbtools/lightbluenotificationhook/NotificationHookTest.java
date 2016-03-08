@@ -242,6 +242,27 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         Assert.assertNotNull(insertCapturingMediator.capturedInsert);
     }
 
+    @Test
+    public void shouldDoSimpleDiffs() throws Exception {
+        EntityMetadata md = getMd("usermd.json");
+        JsonNode pre = loadJsonNode("userdata.json");
+        JsonNode post = loadJsonNode("userdata.json");
+        JsonDoc.modify(post, new Path("sites.0.streetAddress.city"), JsonNodeFactory.instance.textNode("blah"), true);
+
+        List<HookDoc> docs= new ArrayList<>();
+        HookDoc doc = new HookDoc(md, new JsonDoc(pre), new JsonDoc(post), CRUDOperation.UPDATE, "me");
+        docs.add(doc);
+        
+        HookConfiguration cfg = new NotificationHookConfiguration(
+                projection("{'field':'sites','recursive':1}"),
+                projection("{'field':'sites','recursive':1}"),
+                false);
+
+        hook.processHook(md, cfg, docs);
+        System.out.println(insertCapturingMediator.capturedInsert);
+        Assert.assertNotNull(insertCapturingMediator.capturedInsert);
+    }
+
     private void assertEntityDataValueEquals(ArrayNode ed, String path, String value) {
         int n=ed.size();
         for(int i=0;i<n;i++) {

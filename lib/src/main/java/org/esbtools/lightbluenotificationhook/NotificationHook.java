@@ -167,6 +167,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         
         // Compute diff
         JsonCompare cmp=metadata.getDocComparator();
+        LOGGER.debug("Array identities:{}",cmp.getArrayIdentities());
+        LOGGER.debug("Pre:{}, Post:{}",watchedPreDoc.getRoot(),watchedPostDoc.getRoot());
         DocComparator.Difference<JsonNode> diff=cmp.
             compareNodes(watchedPreDoc.getRoot(),watchedPostDoc.getRoot());
         LOGGER.debug("Diff: {}",diff);
@@ -220,10 +222,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 !(delta instanceof DocComparator.Move) ) {
 
                 if(delta instanceof DocComparator.Removal) {
-                    removedPaths.add(new NotificationEntity.
-                                     PathAndValue(delta.getField().toString(),
-                                                  ((DocComparator.Removal)delta).
-                                                  getRemovedNode().toString()));
+                    removedPaths.addAll(flatten(delta.getField().toString(),
+                                                ((DocComparator.Removal<JsonNode>)delta).getRemovedNode()));
                 } else {
                     if(delta instanceof DocComparator.Move) {
                         // Add the new path to the changedPaths
@@ -251,6 +251,19 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         notificationEntity.setStatus(NotificationEntity.Status.unprocessed);
         
         return notificationEntity;
+    }
+
+    private List<NotificationEntity.PathAndValue> flatten(String prefix,JsonNode node) {
+        List<NotificationEntity.PathAndValue> list=new ArrayList<>();
+        JsonNodeCursor cursor=new JsonNodeCursor(Path.EMPTY,node);
+        while(cursor.next()) {
+            String p=cursor.getCurrentPath().toString();
+            JsonNode value=cursor.getCurrentNode();
+            if(value.isValueNode()) {
+                list.add(new NotificationEntity.PathAndValue(prefix.isEmpty()?p:(prefix+"."+p),value.asText()));
+            }
+        }
+        return list;
     }
 
     // TODO(ahenning): This messiness can be removed if we can inject the lightblue factory in
