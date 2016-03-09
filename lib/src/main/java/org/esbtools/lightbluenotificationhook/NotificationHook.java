@@ -203,8 +203,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         // Add changes to entity data, removed entity data, changed paths, and removed elements
         for(DocComparator.Delta<JsonNode> delta : diff.getDelta()) {
             if (delta instanceof DocComparator.Move && arrayOrderSignificant) {
-                String newPath = delta.getField2().toString();
                 JsonNode movedNode = ((DocComparator.Move<JsonNode>) delta).getMovedNode();
+                String newPath = delta.getField2().toString();
 
                 changedPaths.add(newPath);
                 flatten(newPath, movedNode, entityData);
