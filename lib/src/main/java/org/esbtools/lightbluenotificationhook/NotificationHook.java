@@ -187,6 +187,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         List<PathAndValue> removedEntityData = new ArrayList<>();
         List<String> changedPaths = new ArrayList<>();
         List<String> removedElements = new ArrayList<>();
+        boolean isInsert = hookDoc.getPreDoc() == null;
 
         // Add entity identities to entity data
         for (Field identityField : metadata.getEntitySchema().getIdentityFields()) {
@@ -219,7 +220,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                     String removedValue = removedNode.asText();
                     removedEntityData.add(new PathAndValue(removedPath, removedValue));
                 }
-            } else if (delta instanceof DocComparator.Addition && hookDoc.getPreDoc() != null) {
+            } else if (delta instanceof DocComparator.Addition && !isInsert) {
                 JsonNode addedNode = ((DocComparator.Addition<JsonNode>) delta).getAddedNode();
                 String addedPath = delta.getField().toString();
 
@@ -248,7 +249,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         notificationEntity.setEntityData(entityData);
 
         // TODO(ahenning): Support delete
-        NotificationEntity.Operation operation = hookDoc.getPreDoc() == null
+        NotificationEntity.Operation operation = isInsert
             ? NotificationEntity.Operation.insert
             : NotificationEntity.Operation.update;
 
@@ -281,7 +282,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 if (!entityData.contains(data)) {
                     entityData.add(data);
                 }
-            } 
+            }
         }
     }
 
