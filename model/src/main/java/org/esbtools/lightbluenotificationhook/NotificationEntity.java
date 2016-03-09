@@ -107,7 +107,6 @@ public class NotificationEntity {
         return triggeredByUser;
     }
 
-    @Required
     public void setTriggeredByUser(String triggeredByUser) {
         this.triggeredByUser = triggeredByUser;
     }
@@ -162,6 +161,16 @@ public class NotificationEntity {
 
     public void setRemovedEntityData(List<PathAndValue> l) {
         this.removedEntityData=l;
+    }
+
+    @Transient
+    public boolean hasEntityDataForField(String fieldPath) {
+        for (PathAndValue pathAndValue : entityData) {
+            if (Objects.equals(fieldPath, pathAndValue.getPath())) {
+                return true;
+            }
+        }
+        return false;
     }
     
     @Transient
