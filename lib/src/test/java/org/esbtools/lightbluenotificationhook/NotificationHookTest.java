@@ -25,6 +25,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.truth.Truth;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -243,7 +246,7 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
     }
 
     @Test
-    public void shouldDoSimpleDiffs() throws Exception {
+    public void shouldCaptureWatchedNonContainerNodeChangesInEntityData() throws Exception {
         EntityMetadata md = getMd("usermd.json");
         JsonNode pre = loadJsonNode("userdata.json");
         JsonNode post = loadJsonNode("userdata.json");
@@ -266,7 +269,7 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
     }
 
     @Test
-    public void arrayElementRemoval() throws Exception {
+    public void shouldCaptureWatchedArrayElementRemovalInRemovedEntityDataAndRemovedElements() throws Exception {
         EntityMetadata md = getMd("usermd.json");
         JsonNode pre = loadJsonNode("userdata.json");
         JsonNode post = loadJsonNode("userdata.json");
@@ -289,6 +292,50 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         // Check we also have sites.1 contents
         assertEntityDataValueEquals( (ArrayNode)data.get("removedEntityData"),"sites.1.siteId","2");
         assertEntityDataValueEquals( (ArrayNode)data.get("removedEntityData"),"sites.1.siteType","billing");
+    }
+
+    @Test
+    public void shouldCaptureWatchedArrayElementAdditionInEntityDataAndChangedPaths() throws Exception {
+        EntityMetadata md = getMd("usermd.json");
+        JsonNode pre = loadJsonNode("userdata.json");
+        JsonNode post = loadJsonNode("userdata.json");
+        JsonNode newSite = JsonUtils.json("{\n"
+                + "      \"siteId\": \"3\",\n"
+                + "      \"streetAddress\": {\n"
+                + "        \"address1\": \"123 Some other street\"\n"
+                + "      },\n"
+                + "      \"active\": true,\n"
+                + "      \"usages\": [\n"
+                + "        {\n"
+                + "          \"usage\": \"service\",\n"
+                + "          \"lastUsedOn\": \"20120312T11:27:02.094-0600\"\n"
+                + "        }\n"
+                + "      ]\n"
+                + "    }");
+        JsonDoc.modify(post,new Path("sites.2"),newSite,true);
+
+        List<HookDoc> docs= new ArrayList<>();
+        HookDoc doc = new HookDoc(md, new JsonDoc(pre), new JsonDoc(post), CRUDOperation.UPDATE, "me");
+        docs.add(doc);
+
+        HookConfiguration cfg = new NotificationHookConfiguration(
+                projection("{'field':'sites','recursive':1}"),
+                projection("{'field':'sites','recursive':1}"),
+                false);
+
+        hook.processHook(md, cfg, docs);
+        JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
+
+        Truth.assertThat(
+                Iterables.transform(data.get("changedPaths"), toTextValue()))
+                .containsExactly("sites.2");
+
+        ArrayNode entityData = (ArrayNode) data.get("entityData");
+        assertEntityDataValueEquals(entityData, "sites.2.siteId", "3");
+        assertEntityDataValueEquals(entityData, "sites.2.streetAddress.address1", "123 Some other street");
+        assertEntityDataValueEquals(entityData, "sites.2.active", "true");
+        assertEntityDataValueEquals(entityData, "sites.2.usages.0.usage", "service");
+        assertEntityDataValueEquals(entityData, "sites.2.usages.0.lastUsedOn", "20120312T11:27:02.094-0600");
     }
 
     private void assertEntityDataValueEquals(ArrayNode ed, String path, String value) {
@@ -319,6 +366,14 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         EntityMetadata md = parser.parseEntityMetadata(node);
         PredefinedFields.ensurePredefinedFields(md);
         return md;
+    }
+
+    private static Function<JsonNode, Object> toTextValue() {
+        return new Function<JsonNode, Object>() {
+            public Object apply(JsonNode input) {
+                return input.textValue();
+            }
+        };
     }
 
     public class FakeMongoDataStoreParser<T> implements DataStoreParser<T> {
