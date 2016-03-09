@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import org.esbtools.lightbluenotificationhook.NotificationEntity.PathAndValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -186,7 +187,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         // Set the payload
         JsonDoc includeDoc=includeProjector.project(postDoc,jsonNodeFactory);
         
-        List<NotificationEntity.PathAndValue> data=new ArrayList<>();
+        List<PathAndValue> entityData=new ArrayList<>();
 
         // Don't iterate if empty doc
         if(includeDoc.getRoot().size()>0) {
@@ -194,17 +195,18 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             while(cursor.next()) {
                 JsonNode node=cursor.getCurrentNode();
                 if(!(node instanceof ContainerNode)) {
-                    data.add(new NotificationEntity.PathAndValue(cursor.getCurrentPath().toString(),
+                    entityData.add(new PathAndValue(cursor.getCurrentPath().toString(),
                                                                  node.asText()));
                 }
             }
         }
-        // Add entity identities to properties
+
+        // Add entity identities to entity data
         for (Field identityField : metadata.getEntitySchema().getIdentityFields()) {
             Path identityPath = identityField.getFullPath();
             String pathString = identityPath.toString();
             boolean found=false;
-            for(NotificationEntity.PathAndValue v:data) {
+            for(PathAndValue v:entityData) {
                 if(v.getPath().equals(pathString)) {
                     found=true;
                     break;
@@ -212,40 +214,52 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
             }
             if(!found) {
                 String valueString = postDoc.get(identityPath).asText();            
-                data.add(new NotificationEntity.PathAndValue(pathString, valueString));
+                entityData.add(new PathAndValue(pathString, valueString));
             }
         }
-        List<String> changedPaths=new ArrayList<>();
-        List<NotificationEntity.PathAndValue> removedPaths=new ArrayList<>();
-        List<String> removedElements=new ArrayList<>();
-        for(DocComparator.Delta<JsonNode> delta:diff.getDelta()) {
-            if( (delta instanceof DocComparator.Move && arrayOrderSignificant) ||
-                !(delta instanceof DocComparator.Move) ) {
 
-                if(delta instanceof DocComparator.Removal) {
-                    JsonNode removedNode=((DocComparator.Removal<JsonNode>)delta).getRemovedNode();
-                    if(removedNode.isContainerNode()) {
-                        removedElements.add(delta.getField().toString());
-                        flatten(delta.getField().toString(),
-                                ((DocComparator.Removal<JsonNode>)delta).getRemovedNode(),
-                                removedPaths);
-                    } else {
-                        removedPaths.add(new NotificationEntity.PathAndValue(delta.getField().toString(),removedNode.asText()));
-                    }
+        List<String> changedPaths = new ArrayList<>();
+        List<PathAndValue> removedPaths = new ArrayList<>();
+        List<String> removedElements = new ArrayList<>();
+
+        for(DocComparator.Delta<JsonNode> delta : diff.getDelta()) {
+            if (delta instanceof DocComparator.Move && arrayOrderSignificant) {
+                String newPath = delta.getField2().toString();
+                JsonNode movedNode = ((DocComparator.Move<JsonNode>) delta).getMovedNode();
+
+                changedPaths.add(newPath);
+                flatten(newPath, movedNode, entityData);
+            } else if (delta instanceof DocComparator.Removal) {
+                JsonNode removedNode=((DocComparator.Removal<JsonNode>)delta).getRemovedNode();
+                String removedPath = delta.getField().toString();
+
+                if(removedNode.isContainerNode()) {
+                    removedElements.add(removedPath);
+                    flatten(removedPath, removedNode, removedPaths);
                 } else {
-                    if(delta instanceof DocComparator.Move) {
-                        // Add the new path to the changedPaths
-                        changedPaths.add(delta.getField2().toString());
-                    } else {
-                        changedPaths.add(delta.getField().toString());
-                    }
+                    String removedValue = removedNode.asText();
+                    removedPaths.add(new PathAndValue(removedPath, removedValue));
                 }
+            } else if (delta instanceof DocComparator.Addition && hookDoc.getPreDoc() != null) {
+                JsonNode addedNode = ((DocComparator.Addition<JsonNode>) delta).getAddedNode();
+                String addedPath = delta.getField().toString();
+
+                changedPaths.add(addedPath);
+                flatten(addedPath, addedNode, entityData);
+            } else if (delta instanceof DocComparator.Modification) {
+                JsonNode modifiedNode = ((DocComparator.Modification<JsonNode>) delta).getModifiedNode();
+                String modifiedPath = delta.getField2().toString();
+
+                changedPaths.add(modifiedPath);
+                String modifiedValue = modifiedNode.asText();
+                removedPaths.add(new PathAndValue(modifiedPath, modifiedValue));
             }
         }
+
         notificationEntity.setChangedPaths(changedPaths);
         notificationEntity.setRemovedEntityData(removedPaths);
         notificationEntity.setRemovedElements(removedElements);
-        notificationEntity.setEntityData(data);
+        notificationEntity.setEntityData(entityData);
 
         // TODO(ahenning): Support delete
         NotificationEntity.Operation operation = hookDoc.getPreDoc() == null
@@ -262,14 +276,21 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         return notificationEntity;
     }
 
-    private void flatten(String prefix,JsonNode node,
-                         List<NotificationEntity.PathAndValue> removedPaths) {
-        JsonNodeCursor cursor=new JsonNodeCursor(Path.EMPTY,node);
+    private void flatten(String prefix, JsonNode node, List<PathAndValue> entityData) {
+        JsonNodeCursor cursor = new JsonNodeCursor(Path.EMPTY, node);
+
         while(cursor.next()) {
             String p=cursor.getCurrentPath().toString();
             JsonNode value=cursor.getCurrentNode();
+
             if(value.isValueNode()) {
-                removedPaths.add(new NotificationEntity.PathAndValue(prefix.isEmpty()?p:(prefix+"."+p),value.asText()));
+                String path = prefix.isEmpty() ? p : (prefix + "." + p);
+                PathAndValue data = new PathAndValue(path, value.asText());
+
+                // TODO(ahenning): Consider using Set instead of List for entityData
+                if (!entityData.contains(data)) {
+                    entityData.add(data);
+                }
             } 
         }
     }

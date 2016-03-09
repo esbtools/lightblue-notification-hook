@@ -50,14 +50,14 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
     private NotificationHook hook = new NotificationHook("testHook", insertCapturingMediator);
 
     @Test
-    public void shouldCreateNotificationWithIdsForEntityInsertsWhichContainWatchedFieldsWhenNoIncludeProjectionConfigured() throws Exception {
+    public void shouldCreateNotificationWithIdsAndChangedFieldsForEntityInsertsWithinWatchedFieldsWhenNoIncludeProjectionConfigured() throws Exception {
         EntityMetadata md = getMd("usermd.json");
         JsonNode data = loadJsonNode("userdata.json");
 
         HookConfiguration cfg = new NotificationHookConfiguration(
                 // Watch anything under "personalInfo"
                 projection("{'field':'personalInfo','recursive':1}"),
-                // Only store id in notification
+                // No include projection
                 null,
                 // Ignore array order
                 false);
