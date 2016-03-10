@@ -320,7 +320,7 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
 
         HookConfiguration cfg = new NotificationHookConfiguration(
                 projection("{'field':'sites','recursive':1}"),
-                projection("{'field':'sites','recursive':1}"),
+                null,
                 false);
 
         hook.processHook(md, cfg, docs);
@@ -338,6 +338,53 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         assertEntityDataValueEquals(entityData, "sites.2.usages.0.lastUsedOn", "20120312T11:27:02.094-0600");
     }
 
+    @Test
+    public void shouldCaptureOnlyWatchedFieldsOfArrayElementAdditionInEntityDataAndChangedPaths() throws Exception {
+        EntityMetadata md = getMd("usermd.json");
+        JsonNode pre = loadJsonNode("userdata.json");
+        JsonNode post = loadJsonNode("userdata.json");
+        JsonNode newSite = JsonUtils.json("{\n"
+                + "      \"siteId\": \"3\",\n"
+                + "      \"streetAddress\": {\n"
+                + "        \"address1\": \"123 Some other street\"\n"
+                + "      },\n"
+                + "      \"active\": true,\n"
+                + "      \"usages\": [\n"
+                + "        {\n"
+                + "          \"usage\": \"service\",\n"
+                + "          \"lastUsedOn\": \"20120312T11:27:02.094-0600\"\n"
+                + "        }\n"
+                + "      ]\n"
+                + "    }");
+        JsonDoc.modify(post,new Path("sites.2"),newSite,true);
+
+        List<HookDoc> docs= new ArrayList<>();
+        HookDoc doc = new HookDoc(md, new JsonDoc(pre), new JsonDoc(post), CRUDOperation.UPDATE, "me");
+        docs.add(doc);
+
+        HookConfiguration cfg = new NotificationHookConfiguration(
+                projection("["
+                        + "{'field':'sites.*.siteId'},"
+                        + "{'field':'sites.*.active'}"
+                        + "]"),
+                null,
+                false);
+
+        hook.processHook(md, cfg, docs);
+        JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
+
+        Truth.assertThat(
+                Iterables.transform(data.get("changedPaths"), toTextValue()))
+                .containsExactly("sites.2");
+
+        ArrayNode entityData = (ArrayNode) data.get("entityData");
+        assertEntityDataValueEquals(entityData, "sites.2.siteId", "3");
+        assertEntityDataValueEquals(entityData, "sites.2.active", "true");
+        assertEntityDataDoesNotContain(entityData, "sites.2.streetAddress.address1");
+        assertEntityDataDoesNotContain(entityData, "sites.2.usages.0.usage");
+        assertEntityDataDoesNotContain(entityData, "sites.2.usages.0.lastUsedOn");
+    }
+
     private void assertEntityDataValueEquals(ArrayNode ed, String path, String value) {
         int n=ed.size();
         for(int i=0;i<n;i++) {
@@ -350,6 +397,17 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
             }
         }
         Assert.fail("Expected to find "+path+":"+value);
+    }
+
+    private void assertEntityDataDoesNotContain(ArrayNode ed, String path) {
+        int n=ed.size();
+        for(int i=0;i<n;i++) {
+            ObjectNode node=(ObjectNode)ed.get(i);
+            JsonNode p=node.get("path");
+            if (p != null && p.textValue().equals(path)) {
+                Assert.fail("Unexpected path "+path);
+            }
+        }
     }
 
     private Projection projection(String s) throws Exception {
