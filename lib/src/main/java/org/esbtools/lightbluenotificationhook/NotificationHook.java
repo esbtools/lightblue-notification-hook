@@ -13,6 +13,8 @@ import com.redhat.lightblue.hooks.HookDoc;
 import com.redhat.lightblue.mediator.Mediator;
 import com.redhat.lightblue.metadata.EntityMetadata;
 import com.redhat.lightblue.metadata.Field;
+import com.redhat.lightblue.metadata.FieldCursor;
+import com.redhat.lightblue.metadata.FieldTreeNode;
 import com.redhat.lightblue.metadata.HookConfiguration;
 import com.redhat.lightblue.util.DocComparator;
 import com.redhat.lightblue.util.Error;
@@ -20,6 +22,10 @@ import com.redhat.lightblue.util.JsonCompare;
 import com.redhat.lightblue.util.JsonDoc;
 import com.redhat.lightblue.util.JsonNodeCursor;
 import com.redhat.lightblue.util.Path;
+
+import com.redhat.lightblue.query.Projection;
+import com.redhat.lightblue.query.ProjectionList;
+import com.redhat.lightblue.query.FieldProjection;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +39,8 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     
@@ -88,7 +96,9 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         Mediator mediator = tryGetMediator();
 
         Projector watchProjector = Projector.getInstance(config.watchProjection(), entityMetadata);
-        Projector includeProjector = Projector.getInstance(config.includeProjection(), entityMetadata);
+        Projection includeProjection=addArrayIdentities(config.includeProjection(),entityMetadata);
+        Projector includeProjector = Projector.getInstance(includeProjection, entityMetadata);
+        
 
         for (HookDoc hookDoc : hookDocs) {
             HookResult result = processSingleHookDoc(entityMetadata,
@@ -106,6 +116,41 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                                                             result.dataErrors);
             }
         }
+    }
+
+    private boolean isProjected(Path field,Projection p) {
+        switch(p.getFieldInclusion(field)) {
+        case explicit_inclusion:
+        case implicit_inclusion:return true;
+        default: return false;
+        }
+    }
+
+    private Projection addArrayIdentities(Projection p,EntityMetadata md) {
+        // If an array is included in the projection, make sure its identity is also included
+        Map<Path,List<Path>> arrayIdentities=md.getEntitySchema().getArrayIdentities();
+        List<Projection> addFields=new ArrayList<>();
+        for(Map.Entry<Path,List<Path>> entry:arrayIdentities.entrySet()) {
+            Path array=entry.getKey();
+            List<Path> identities=new ArrayList<>();
+            for(Path x:entry.getValue())
+                identities.add(new Path(array,new Path(Path.ANYPATH,x)));
+            
+            if(isProjected(array,p)) {
+                for(Path id:identities) {
+                    if(!isProjected(id,p)) {
+                        addFields.add(new FieldProjection(id,true,true));
+                    }
+                }
+            }
+        }
+        if(!addFields.isEmpty()) {
+            LOGGER.debug("Excluded array identities are added to projection:{}",addFields);
+            // Need to first add the original projection, then the included fields.
+            // This is order sensitive
+            return Projection.add(p,new ProjectionList(addFields));
+        } else
+            return p;
     }
     
     private HookResult processSingleHookDoc(EntityMetadata metadata,
