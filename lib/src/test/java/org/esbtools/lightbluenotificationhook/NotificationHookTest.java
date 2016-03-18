@@ -145,14 +145,12 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         Assert.assertNotNull(notification);
         System.out.println(notification);
         ArrayNode ed=(ArrayNode)notification.get("entityData");
-        Assert.assertEquals(7,ed.size());
+        Assert.assertEquals(5,ed.size());
         assertEntityDataValueEquals(ed,"_id","123");
         assertEntityDataValueEquals(ed,"iduid","345");
         assertEntityDataValueEquals(ed,"login","bserdar");
         assertEntityDataValueEquals(ed,"sites.0.siteType","shipping");
         assertEntityDataValueEquals(ed,"sites.1.siteType","billing");
-        assertEntityDataValueEquals(ed,"sites.0.siteId","1");
-        assertEntityDataValueEquals(ed,"sites.1.siteId","2");
     }
 
     @Test
@@ -270,8 +268,10 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         Assert.assertEquals(1,data.get("changedPaths").size());
     }
 
-  @Test
-    public void shouldIncludeArrayIds() throws Exception {
+    
+    @Test
+    public void shouldOnlyIncludeWhatChangedOfArrayElementIfElementIdentityNotWatched()
+            throws Exception {
         EntityMetadata md = getMd("usermd.json");
         JsonNode pre = loadJsonNode("userdata.json");
         JsonNode post = loadJsonNode("userdata.json");
@@ -281,19 +281,20 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         HookDoc doc = new HookDoc(md, new JsonDoc(pre), new JsonDoc(post), CRUDOperation.UPDATE, "me");
         docs.add(doc);
 
-        // Exclude site id here, make sure it is still included
         HookConfiguration cfg = new NotificationHookConfiguration(
-                projection("{'field':'sites','recursive':1}"),
-                projection("[{'field':'sites','recursive':1}"+
-                           ",{'field':'sites.*.siteId','include':0}]"),
+                projection("{'field':'sites.*.streetAddress.city','recursive':1}"),
+                null,
                 false);
-        
 
         hook.processHook(md, cfg, docs);
         Assert.assertNotNull(insertCapturingMediator.capturedInsert);
         JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
-        assertEntityDataValueEquals((ArrayNode)data.get("entityData"),"sites.0.siteId","1");
+
+        Truth.assertThat(
+                Iterables.transform(data.get("changedPaths"), toTextValue()))
+                .containsExactly("sites.0.streetAddress.city");
     }
+
 
     @Test
     public void shouldCaptureWatchedArrayElementRemovalInRemovedEntityDataAndRemovedElements() throws Exception {

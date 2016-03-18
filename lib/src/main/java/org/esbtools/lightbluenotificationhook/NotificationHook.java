@@ -95,9 +95,9 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         NotificationHookConfiguration config = (NotificationHookConfiguration) hookConfiguration;
         Mediator mediator = tryGetMediator();
 
-        Projector watchProjector = Projector.getInstance(config.watchProjection(), entityMetadata);
-        Projection includeProjection=addArrayIdentities(config.includeProjection(),entityMetadata);
-        Projector includeProjector = Projector.getInstance(includeProjection, entityMetadata);
+        Projection watchProjection=addArrayIdentities(config.watchProjection(),entityMetadata);
+        Projector watchProjector = Projector.getInstance(watchProjection, entityMetadata);
+        Projector includeProjector = Projector.getInstance(config.includeProjection(), entityMetadata);
         
 
         for (HookDoc hookDoc : hookDocs) {
