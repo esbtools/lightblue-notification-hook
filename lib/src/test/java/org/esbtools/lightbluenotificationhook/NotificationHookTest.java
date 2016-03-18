@@ -268,6 +268,34 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         Assert.assertEquals(1,data.get("changedPaths").size());
     }
 
+    
+    @Test
+    public void shouldOnlyIncludeWhatChangedOfArrayElementIfElementIdentityNotWatched()
+            throws Exception {
+        EntityMetadata md = getMd("usermd.json");
+        JsonNode pre = loadJsonNode("userdata.json");
+        JsonNode post = loadJsonNode("userdata.json");
+        JsonDoc.modify(post, new Path("sites.0.streetAddress.city"), JsonNodeFactory.instance.textNode("blah"), true);
+
+        List<HookDoc> docs= new ArrayList<>();
+        HookDoc doc = new HookDoc(md, new JsonDoc(pre), new JsonDoc(post), CRUDOperation.UPDATE, "me");
+        docs.add(doc);
+
+        HookConfiguration cfg = new NotificationHookConfiguration(
+                projection("{'field':'sites.*.streetAddress.city','recursive':1}"),
+                null,
+                false);
+
+        hook.processHook(md, cfg, docs);
+        Assert.assertNotNull(insertCapturingMediator.capturedInsert);
+        JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
+
+        Truth.assertThat(
+                Iterables.transform(data.get("changedPaths"), toTextValue()))
+                .containsExactly("sites.0.streetAddress.city");
+    }
+
+
     @Test
     public void shouldCaptureWatchedArrayElementRemovalInRemovedEntityDataAndRemovedElements() throws Exception {
         EntityMetadata md = getMd("usermd.json");

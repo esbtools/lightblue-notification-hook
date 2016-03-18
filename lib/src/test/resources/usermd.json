@@ -173,7 +173,10 @@
           "type": "object",
           "fields": {
             "siteId": {
-              "type": "string"
+                "type": "string",
+                "constraints":{
+                    "element-identity":true
+                }
             },
             "streetAddress": {
               "type": "object",
