@@ -11,7 +11,14 @@ public class EntityNotificationHookConfigurationReader {
                     EntityNotificationHookConfiguration.class.isAssignableFrom(field.getType())) {
                 field.setAccessible(true);
 
-                return (EntityNotificationHookConfiguration) field.get(null);
+                EntityNotificationHookConfiguration config =
+                        (EntityNotificationHookConfiguration) field.get(null);
+
+                if (config == null) {
+                    continue;
+                }
+
+                return config;
             }
         }
 
