@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>lightblue-notification-hook-config-generation-parent</artifactId>
+        <groupId>org.esbtools.lightblue-notification-hook</groupId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>lightblue-notification-hook-config-generation-bin</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+
+    <properties>
+        <version.notification-hook>0.1.0-SNAPSHOT</version.notification-hook>
+        <version.notification-hook-config-generation-api>0.1.0-SNAPSHOT</version.notification-hook-config-generation-api>
+        <version.lightblue-core-metadata>1.11.0</version.lightblue-core-metadata>
+        <version.jimfs>1.1</version.jimfs>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.esbtools.lightblue-notification-hook</groupId>
+                <artifactId>lightblue-notification-hook</artifactId>
+                <version>${version.notification-hook}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.esbtools.lightblue-notification-hook</groupId>
+            <artifactId>lightblue-notification-hook-config-generation-api</artifactId>
+            <version>${version.notification-hook-config-generation-api}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.esbtools.lightblue-notification-hook</groupId>
+            <artifactId>lightblue-notification-hook</artifactId>
+            <version>${version.notification-hook}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.redhat.lightblue</groupId>
+            <artifactId>lightblue-core-metadata</artifactId>
+            <version>${version.lightblue-core-metadata}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.jimfs</groupId>
+            <artifactId>jimfs</artifactId>
+            <version>${version.jimfs}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>
