@@ -42,6 +42,23 @@
             <artifactId>lightblue-notification-hook</artifactId>
             <version>${version.notification-hook}</version>
         </dependency>
+        <!--
+        Below dependency on lightblue-core is optional. This is because the hook config generator
+        may be used one of two ways:
+
+        1. A source of truth for getting hook configuration from an entity.
+        2. A CLI java application to generate configuration as json for given entities.
+
+        Way 1 is useful for tests: your tests can use the same configuration that you know will be
+        used in production.
+
+        However, way 2 of those options has severe dependency consequences because it requires
+        pulling in lightblue-core-metadata, which includes a lot of stuff. Additionally, we already
+        depend on below project already for integration testing. Therefore, adding another potential
+        conflict unnecessarily is undesirable.
+
+        Therefore, it is optional.
+        -->
         <dependency>
             <groupId>com.redhat.lightblue</groupId>
             <artifactId>lightblue-core-metadata</artifactId>
