@@ -1,5 +1,7 @@
 package org.esbtools.lightbluenotificationhook;
 
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -31,7 +33,10 @@ public class Main {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
-    private static final ObjectWriter prettyWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
+    private static final ObjectWriter prettyWriter = new ObjectMapper()
+            .writer(new DefaultPrettyPrinter()
+                    .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
+                    .withoutSpacesInObjectEntries());
 
     public Main(JSONMetadataParser parser, ObjectWriter jsonWriter, JsonNodeFactory jsonNodeFactory,
             EntityNotificationHookConfigurationReader hookConfigReader) {
