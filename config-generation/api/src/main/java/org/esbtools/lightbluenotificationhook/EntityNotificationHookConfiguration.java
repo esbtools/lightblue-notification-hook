@@ -3,7 +3,13 @@ package org.esbtools.lightbluenotificationhook;
 import com.redhat.lightblue.client.Projection;
 
 /**
+ * Defines notification hook configuration for a given entity using client-side constructs defined
+ * in lightblue-client library for building projection JSON.
  *
+ * <p>A static instance field of this type is readable for configuration generation. To generate an
+ * the hook configuration JSON for an entity, define a static field on a class (usually the
+ * notification implementation for that entity) which is an instance of this type. A builder is
+ * provided via {@link #forEntity(String)}.
  */
 public interface EntityNotificationHookConfiguration {
     String entityName();
