@@ -6,7 +6,7 @@ import java.lang.reflect.Modifier;
 public class EntityNotificationHookConfigurationReader {
     /**
      * Reads entity notification hook configuration from a given class via reflectively examining
-     * its static fields. The first static field which is non-null, implements
+     * its static fields. The first static field which implements
      * {@link EntityNotificationHookConfiguration}, and is annotated with
      * {@link GeneratedNotificationHookConfiguration} is returned.
      *
@@ -30,15 +30,18 @@ public class EntityNotificationHookConfigurationReader {
                         (EntityNotificationHookConfiguration) field.get(null);
 
                 if (config == null) {
-                    continue;
+                    throw new NullPointerException("Found static " +
+                            EntityNotificationHookConfiguration.class + " field annotated with " +
+                            GeneratedNotificationHookConfiguration.class + " but it was null.");
                 }
 
                 return config;
             }
         }
 
-        throw new IllegalArgumentException("No static field found with non-null instance of " +
-                EntityNotificationHookConfiguration.class + " on class " + notification + " when " +
-                "trying to generate notification hook configuration.");
+        throw new IllegalArgumentException("No static " +
+                EntityNotificationHookConfiguration.class + " field found annotated with " +
+                GeneratedNotificationHookConfiguration.class + " on class " + notification + " " +
+                "when trying to generate notification hook configuration.");
     }
 }
