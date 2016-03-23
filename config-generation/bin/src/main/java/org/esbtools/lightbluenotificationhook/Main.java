@@ -95,7 +95,7 @@ public class Main {
         List<String> helpArgs = Arrays.asList("-h", "h", "?", "-?", "help", "-help", "--help");
 
         if (args.length < 2) {
-            print("Not enough arguments provided, see usage:");
+            println("Not enough arguments provided, see usage:");
             printUsageAndExit();
         } else if (helpArgs.contains(args[0].toLowerCase())) {
             printUsageAndExit();
@@ -123,17 +123,17 @@ public class Main {
     }
 
     private static void printUsageAndExit() {
-        print("Usage: generator path/to/result/dir/ com.mycompany.Notification1 com.mycompany.Notification2 ...");
-        print("Expects notifications to have a static field which is an instance of ");
-        print(EntityNotificationHookConfiguration.class + ". This will be output as config.");
-        print("");
-        print("Also expects classpath to already contain these classes and these dependencies.");
-        print("This is most natural to do by running from the maven project using the exec maven");
-        print("plugin: http://www.mojohaus.org/exec-maven-plugin/examples/example-exec-using-plugin-dependencies.html");
+        println("Usage: generator path/to/result/dir/ com.mycompany.Notification1 com.mycompany.Notification2 ...");
+        println("Expects notifications to have a static field which is an instance of ");
+        println(EntityNotificationHookConfiguration.class + ". This will be output as config.");
+        println("");
+        println("Also expects classpath to already contain these classes and these dependencies.");
+        println("This is most natural to do by running from the maven project using the exec maven");
+        println("plugin: http://www.mojohaus.org/exec-maven-plugin/examples/example-exec-using-plugin-dependencies.html");
         System.exit(1);
     }
 
-    static void print(Object line) {
+    private static void println(Object line) {
         System.out.println(line);
     }
 }
