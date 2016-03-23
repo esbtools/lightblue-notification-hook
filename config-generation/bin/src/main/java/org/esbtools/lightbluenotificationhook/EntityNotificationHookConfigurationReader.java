@@ -6,12 +6,12 @@ import java.lang.reflect.Modifier;
 public class EntityNotificationHookConfigurationReader {
     /**
      * Reads entity notification hook configuration from a given class via reflectively examining
-     * its static fields. The first static field which implements
-     * {@link EntityNotificationHookConfiguration}, and is annotated with
-     * {@link GeneratedNotificationHookConfiguration} is returned.
+     * its static fields.
      *
      * <p>This method should be used as the source of truth for how this configuration is attached
      * to a given class.
+     *
+     * @see GeneratedNotificationHookConfiguration
      */
     public EntityNotificationHookConfiguration readConfiguration(
             Class<?> notification) throws IllegalAccessException {
