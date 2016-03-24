@@ -11,18 +11,18 @@ public class EntityNotificationHookConfigurationReader {
      * <p>This method should be used as the source of truth for how this configuration is attached
      * to a given class.
      *
-     * @see GeneratedNotificationHookConfiguration
+     * @see GeneratesNotificationHookConfiguration
      */
     public EntityNotificationHookConfiguration readConfiguration(
             Class<?> notification) throws IllegalAccessException {
         for (Field field : notification.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers()) &&
-                    field.isAnnotationPresent(GeneratedNotificationHookConfiguration.class)) {
+                    field.isAnnotationPresent(GeneratesNotificationHookConfiguration.class)) {
                 field.setAccessible(true);
 
                 if (!EntityNotificationHookConfiguration.class.isAssignableFrom(field.getType())) {
                     throw new IllegalArgumentException("Static field annotated with " +
-                            GeneratedNotificationHookConfiguration.class + " does not implement " +
+                            GeneratesNotificationHookConfiguration.class + " does not implement " +
                             EntityNotificationHookConfiguration.class);
                 }
 
@@ -32,7 +32,7 @@ public class EntityNotificationHookConfigurationReader {
                 if (config == null) {
                     throw new NullPointerException("Found static " +
                             EntityNotificationHookConfiguration.class + " field annotated with " +
-                            GeneratedNotificationHookConfiguration.class + " but it was null.");
+                            GeneratesNotificationHookConfiguration.class + " but it was null.");
                 }
 
                 return config;
@@ -41,7 +41,7 @@ public class EntityNotificationHookConfigurationReader {
 
         throw new IllegalArgumentException("No static " +
                 EntityNotificationHookConfiguration.class + " field found annotated with " +
-                GeneratedNotificationHookConfiguration.class + " on class " + notification + " " +
+                GeneratesNotificationHookConfiguration.class + " on class " + notification + " " +
                 "when trying to generate notification hook configuration.");
     }
 }
