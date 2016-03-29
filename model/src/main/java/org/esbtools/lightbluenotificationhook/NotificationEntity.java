@@ -198,13 +198,17 @@ public class NotificationEntity {
                 Objects.equals(occurrenceDate, that.occurrenceDate) &&
                 Objects.equals(processingDate, that.processingDate) &&
                 Objects.equals(processedDate, that.processedDate) &&
-                Objects.equals(entityData, that.entityData);
+                Objects.equals(entityData, that.entityData) &&
+                Objects.equals(changedPaths, that.changedPaths) &&
+                Objects.equals(removedEntityData, that.removedEntityData) &&
+                Objects.equals(removedElements, that.removedElements);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(_id, entityName, entityVersion, status, operation, triggeredByUser,
-                occurrenceDate, processingDate, processedDate, entityData);
+                occurrenceDate, processingDate, processedDate, entityData, changedPaths,
+                removedEntityData, removedElements);
     }
 
     @Override
@@ -220,6 +224,9 @@ public class NotificationEntity {
                 ", processingDate=" + processingDate +
                 ", processedDate=" + processedDate +
                 ", entityData=" + entityData +
+                ", changedPaths=" + changedPaths +
+                ", removedEntityData=" + removedEntityData +
+                ", removedElements=" + removedElements +
                 '}';
     }
 
