@@ -1,5 +1,11 @@
 package org.esbtools.lightbluenotificationhook;
 
+import org.esbtools.lightbluenotificationhook.NotificationEntity.PathAndValue;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.redhat.lightblue.ClientIdentification;
 import com.redhat.lightblue.DataError;
 import com.redhat.lightblue.EntityVersion;
 import com.redhat.lightblue.Response;
@@ -13,25 +19,16 @@ import com.redhat.lightblue.hooks.HookDoc;
 import com.redhat.lightblue.mediator.Mediator;
 import com.redhat.lightblue.metadata.EntityMetadata;
 import com.redhat.lightblue.metadata.Field;
-import com.redhat.lightblue.metadata.FieldCursor;
-import com.redhat.lightblue.metadata.FieldTreeNode;
 import com.redhat.lightblue.metadata.HookConfiguration;
+import com.redhat.lightblue.query.FieldProjection;
+import com.redhat.lightblue.query.Projection;
+import com.redhat.lightblue.query.ProjectionList;
 import com.redhat.lightblue.util.DocComparator;
 import com.redhat.lightblue.util.Error;
 import com.redhat.lightblue.util.JsonCompare;
 import com.redhat.lightblue.util.JsonDoc;
 import com.redhat.lightblue.util.JsonNodeCursor;
 import com.redhat.lightblue.util.Path;
-
-import com.redhat.lightblue.query.Projection;
-import com.redhat.lightblue.query.ProjectionList;
-import com.redhat.lightblue.query.FieldProjection;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ContainerNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import org.esbtools.lightbluenotificationhook.NotificationEntity.PathAndValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,10 +37,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 public class NotificationHook implements CRUDHook, LightblueFactoryAware {
-    
     private final String name;
     private final JsonNodeFactory jsonNodeFactory;
     private final ObjectMapper objectMapper;
@@ -52,6 +47,18 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     private @Nullable Mediator mediator;
 
     private static final Logger LOGGER=LoggerFactory.getLogger(NotificationHook.class);
+
+    private final ClientIdentification notificationHookClientId = new ClientIdentification() {
+        @Override
+        public String getPrincipal() {
+            return name;
+        }
+
+        @Override
+        public boolean isUserInRole(String s) {
+            return true;
+        }
+    };
 
     public NotificationHook(String name) {
         this(name, null);
@@ -180,7 +187,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                                                                           NotificationEntity.ENTITY_VERSION);
                     
                     InsertionRequest newNotification = new InsertionRequest();
-                    
+                    newNotification.setClientId(notificationHookClientId);
                     newNotification.setEntityVersion(notificationVersion);
                     newNotification.setEntityData(objectMapper.valueToTree(notification));
                     

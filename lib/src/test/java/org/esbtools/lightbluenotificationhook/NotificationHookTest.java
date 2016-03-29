@@ -1,5 +1,6 @@
 package org.esbtools.lightbluenotificationhook;
 
+import com.redhat.lightblue.ClientIdentification;
 import com.redhat.lightblue.Response;
 import com.redhat.lightblue.crud.CRUDOperation;
 import com.redhat.lightblue.crud.InsertionRequest;
@@ -411,6 +412,27 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         assertEntityDataDoesNotContain(entityData, "sites.2.streetAddress.address1");
         assertEntityDataDoesNotContain(entityData, "sites.2.usages.0.usage");
         assertEntityDataDoesNotContain(entityData, "sites.2.usages.0.lastUsedOn");
+    }
+    
+    @Test
+    public void shouldSetPrivilegedClientIdOnRequest() throws Exception {
+        EntityMetadata md = getMd("usermd.json");
+        JsonNode data = loadJsonNode("userdata.json");
+
+        HookConfiguration cfg = new NotificationHookConfiguration(
+                projection("{'field':'*','recursive':1}"), null, false);
+
+        List<HookDoc> docs = new ArrayList<>();
+        HookDoc doc = new HookDoc(md,null,new JsonDoc(data),CRUDOperation.INSERT,"me");
+        docs.add(doc);
+
+        hook.processHook(md, cfg, docs);
+
+        ClientIdentification clientId = insertCapturingMediator.capturedInsert.getClientId();
+
+        Assert.assertNotNull(clientId);
+        Assert.assertTrue(clientId.isUserInRole("some-role-for-notification"));
+        Assert.assertTrue(clientId.isUserInRole("lb-notification-insert"));
     }
 
     private void assertEntityDataValueEquals(ArrayNode ed, String path, String value) {
