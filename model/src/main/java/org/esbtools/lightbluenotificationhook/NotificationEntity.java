@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.github.alechenninger.lightblue.Description;
 import io.github.alechenninger.lightblue.EntityName;
 import io.github.alechenninger.lightblue.Identity;
-import io.github.alechenninger.lightblue.MinItems;
 import io.github.alechenninger.lightblue.Required;
 import io.github.alechenninger.lightblue.Transient;
 import io.github.alechenninger.lightblue.Version;
@@ -32,17 +31,17 @@ public class NotificationEntity {
     private String entityVersion;
     private Status status;
     private Operation operation;
-    private String triggeredByUser;
+    private String clientRequestPrincipal;
     // TODO: Would like to use JDK8 date types, but with lightblue's included version
     // of jackson, @JsonFormat does not work.
     // See: https://github.com/lightblue-platform/lightblue-core/issues/557
-    private Date occurrenceDate;
+    private Date clientRequestDate;
     private Date processingDate;
     private Date processedDate;
     private List<PathAndValue> entityData;
     private List<String> changedPaths;
     private List<PathAndValue> removedEntityData;
-    private List<String> removedElements;
+    private List<String> removedPaths;
 
     private static final String LIGHTBLUE_DATE_FORMAT = "yyyyMMdd\'T\'HH:mm:ss.SSSZ";
 
@@ -81,6 +80,11 @@ public class NotificationEntity {
         return entityData;
     }
 
+    @Description("Captured entity data from the state of the entity at the time the client " +
+            "request was made (see clientRequestDate). Entity data is captured as a list of key " +
+            "value pairs, where the key is the lightblue path of a field, and the value is that " +
+            "field's value. Only primitive values are supported, so objects are flattened to " +
+            "individual paths for each field in the object.")
     public void setEntityData(List<PathAndValue> data) {
         this.entityData=data;
     }
@@ -103,22 +107,25 @@ public class NotificationEntity {
         this.operation = operation;
     }
 
-    public String getTriggeredByUser() {
-        return triggeredByUser;
+    public String getClientRequestPrincipal() {
+        return clientRequestPrincipal;
     }
 
-    public void setTriggeredByUser(String triggeredByUser) {
-        this.triggeredByUser = triggeredByUser;
+    @Description("If lightblue authentication is enabled, this is the principal of the client " +
+            "who made the request this notification is representing.")
+    public void setClientRequestPrincipal(String clientRequestPrincipal) {
+        this.clientRequestPrincipal = clientRequestPrincipal;
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = LIGHTBLUE_DATE_FORMAT)
-    public Date getOccurrenceDate() {
-        return occurrenceDate;
+    public Date getClientRequestDate() {
+        return clientRequestDate;
     }
 
+    @Description("The date the client request was made that this notification is representing.")
     @Required
-    public void setOccurrenceDate(Date occurrenceDate) {
-        this.occurrenceDate = occurrenceDate;
+    public void setClientRequestDate(Date clientRequestDate) {
+        this.clientRequestDate = clientRequestDate;
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = LIGHTBLUE_DATE_FORMAT)
@@ -143,22 +150,29 @@ public class NotificationEntity {
         return changedPaths;
     }
 
+    @Description("Lightblue paths to fields which have changed or array elements which have been " +
+            "added. If array order is significant, moved array elements' paths will also be " +
+            "included.")
     public void setChangedPaths(List<String> paths) {
         this.changedPaths=paths;
     }
 
-    public List<String> getRemovedElements() {
-        return removedElements;
+    public List<String> getRemovedPaths() {
+        return removedPaths;
     }
 
-    public void setRemovedElements(List<String> paths) {
-        this.removedElements=paths;
+    @Description("Lightblue paths to fields or array elements which were removed.")
+    public void setRemovedPaths(List<String> paths) {
+        this.removedPaths =paths;
     }
 
     public List<PathAndValue> getRemovedEntityData() {
         return removedEntityData;
     }
 
+    @Description("Entity data that was removed. Each path in removedPaths will have an entry " +
+            "here with the associated data to that field. As with entityData, all entries are " +
+            "paths to primitive values. Objects are flattened.")
     public void setRemovedEntityData(List<PathAndValue> l) {
         this.removedEntityData=l;
     }
@@ -194,21 +208,21 @@ public class NotificationEntity {
                 Objects.equals(entityVersion, that.entityVersion) &&
                 status == that.status &&
                 operation == that.operation &&
-                Objects.equals(triggeredByUser, that.triggeredByUser) &&
-                Objects.equals(occurrenceDate, that.occurrenceDate) &&
+                Objects.equals(clientRequestPrincipal, that.clientRequestPrincipal) &&
+                Objects.equals(clientRequestDate, that.clientRequestDate) &&
                 Objects.equals(processingDate, that.processingDate) &&
                 Objects.equals(processedDate, that.processedDate) &&
                 Objects.equals(entityData, that.entityData) &&
                 Objects.equals(changedPaths, that.changedPaths) &&
                 Objects.equals(removedEntityData, that.removedEntityData) &&
-                Objects.equals(removedElements, that.removedElements);
+                Objects.equals(removedPaths, that.removedPaths);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(_id, entityName, entityVersion, status, operation, triggeredByUser,
-                occurrenceDate, processingDate, processedDate, entityData, changedPaths,
-                removedEntityData, removedElements);
+        return Objects.hash(_id, entityName, entityVersion, status, operation, clientRequestPrincipal,
+                clientRequestDate, processingDate, processedDate, entityData, changedPaths,
+                removedEntityData, removedPaths);
     }
 
     @Override
@@ -219,14 +233,14 @@ public class NotificationEntity {
                 ", entityVersion='" + entityVersion + '\'' +
                 ", status=" + status +
                 ", operation=" + operation +
-                ", triggeredByUser='" + triggeredByUser + '\'' +
-                ", occurrenceDate=" + occurrenceDate +
+                ", triggeredByUser='" + clientRequestPrincipal + '\'' +
+                ", occurrenceDate=" + clientRequestDate +
                 ", processingDate=" + processingDate +
                 ", processedDate=" + processedDate +
                 ", entityData=" + entityData +
                 ", changedPaths=" + changedPaths +
                 ", removedEntityData=" + removedEntityData +
-                ", removedElements=" + removedElements +
+                ", removedElements=" + removedPaths +
                 '}';
     }
 
@@ -259,6 +273,8 @@ public class NotificationEntity {
             return this.path;
         }
 
+        @Description("A path as in the lightblue query and projection language. For example: " +
+                "'path.to.array.0.field'. Must point to primitive fields.")
         @Required
         public void setPath(String path) {
             this.path = path;
@@ -268,6 +284,7 @@ public class NotificationEntity {
             return this.value;
         }
 
+        @Description("Value stored in this path as a String. Only primitive values are supported.")
         public void setValue(String value) {
             this.value = value;
         }
