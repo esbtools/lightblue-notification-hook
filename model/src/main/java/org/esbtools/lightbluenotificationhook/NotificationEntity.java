@@ -233,14 +233,14 @@ public class NotificationEntity {
                 ", entityVersion='" + entityVersion + '\'' +
                 ", status=" + status +
                 ", operation=" + operation +
-                ", triggeredByUser='" + clientRequestPrincipal + '\'' +
-                ", occurrenceDate=" + clientRequestDate +
+                ", clientRequestPrincipal='" + clientRequestPrincipal + '\'' +
+                ", clientRequestDate=" + clientRequestDate +
                 ", processingDate=" + processingDate +
                 ", processedDate=" + processedDate +
                 ", entityData=" + entityData +
                 ", changedPaths=" + changedPaths +
                 ", removedEntityData=" + removedEntityData +
-                ", removedElements=" + removedPaths +
+                ", removedPaths=" + removedPaths +
                 '}';
     }
 
