@@ -273,6 +273,8 @@ public class NotificationEntity {
             return this.path;
         }
 
+        @Description("A path as in the lightblue query and projection language. For example: " +
+                "'path.to.array.0.field'. Must point to primitive fields.")
         @Required
         public void setPath(String path) {
             this.path = path;
@@ -282,6 +284,7 @@ public class NotificationEntity {
             return this.value;
         }
 
+        @Description("Value stored in this path as a String. Only primitive values are supported.")
         public void setValue(String value) {
             this.value = value;
         }
