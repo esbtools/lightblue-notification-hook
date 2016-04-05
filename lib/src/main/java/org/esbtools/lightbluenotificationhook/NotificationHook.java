@@ -297,7 +297,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         NotificationEntity notificationEntity = new NotificationEntity();
         notificationEntity.setChangedPaths(changedPaths);
         notificationEntity.setRemovedEntityData(removedEntityData);
-        notificationEntity.setRemovedElements(removedElements);
+        notificationEntity.setRemovedPaths(removedElements);
         notificationEntity.setEntityData(entityData);
 
         // TODO(ahenning): Support delete
@@ -308,8 +308,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         notificationEntity.setEntityName(metadata.getName());
         notificationEntity.setEntityVersion(metadata.getVersion().getValue());
         notificationEntity.setOperation(operation);
-        notificationEntity.setTriggeredByUser(hookDoc.getWho());
-        notificationEntity.setOccurrenceDate(hookDoc.getWhen());
+        notificationEntity.setClientRequestPrincipal(hookDoc.getWho());
+        notificationEntity.setClientRequestDate(hookDoc.getWhen());
         notificationEntity.setStatus(NotificationEntity.Status.unprocessed);
         
         return notificationEntity;
