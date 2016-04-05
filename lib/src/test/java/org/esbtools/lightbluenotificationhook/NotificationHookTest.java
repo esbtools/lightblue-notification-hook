@@ -315,8 +315,8 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
 
         hook.processHook(md, cfg, docs);        
         JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
-        Assert.assertEquals(1,data.get("removedElements").size());
-        Assert.assertEquals("sites.1",data.get("removedElements").get(0).asText());
+        Assert.assertEquals(1,data.get("removedPaths").size());
+        Assert.assertEquals("sites.1",data.get("removedPaths").get(0).asText());
 
         // Check we also have sites.1 contents
         assertEntityDataValueEquals( (ArrayNode)data.get("removedEntityData"),"sites.1.siteId","2");
