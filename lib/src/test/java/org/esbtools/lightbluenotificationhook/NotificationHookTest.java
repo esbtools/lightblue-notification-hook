@@ -265,8 +265,8 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         hook.processHook(md, cfg, docs);
         Assert.assertNotNull(insertCapturingMediator.capturedInsert);
         JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
-        Assert.assertEquals("sites.0.streetAddress.city",data.get("changedPaths").get(0).asText());
-        Assert.assertEquals(1,data.get("changedPaths").size());
+        Assert.assertEquals("sites.0.streetAddress.city",data.get("updatedPaths").get(0).asText());
+        Assert.assertEquals(1,data.get("updatedPaths").size());
     }
 
     
@@ -292,7 +292,7 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
 
         Truth.assertThat(
-                Iterables.transform(data.get("changedPaths"), toTextValue()))
+                Iterables.transform(data.get("updatedPaths"), toTextValue()))
                 .containsExactly("sites.0.streetAddress.city");
     }
 
@@ -324,7 +324,7 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
     }
 
     @Test
-    public void shouldCaptureWatchedArrayElementAdditionInEntityDataAndChangedPaths() throws Exception {
+    public void shouldCaptureWatchedArrayElementAdditionInEntityDataAndUpdatedPaths() throws Exception {
         EntityMetadata md = getMd("usermd.json");
         JsonNode pre = loadJsonNode("userdata.json");
         JsonNode post = loadJsonNode("userdata.json");
@@ -356,7 +356,7 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
 
         Truth.assertThat(
-                Iterables.transform(data.get("changedPaths"), toTextValue()))
+                Iterables.transform(data.get("updatedPaths"), toTextValue()))
                 .containsExactly("sites.2");
 
         ArrayNode entityData = (ArrayNode) data.get("entityData");
@@ -368,7 +368,7 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
     }
 
     @Test
-    public void shouldCaptureOnlyWatchedFieldsOfArrayElementAdditionInEntityDataAndChangedPaths() throws Exception {
+    public void shouldCaptureOnlyWatchedFieldsOfArrayElementAdditionInEntityDataAndUpdatedPaths() throws Exception {
         EntityMetadata md = getMd("usermd.json");
         JsonNode pre = loadJsonNode("userdata.json");
         JsonNode post = loadJsonNode("userdata.json");
@@ -403,7 +403,7 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
 
         Truth.assertThat(
-                Iterables.transform(data.get("changedPaths"), toTextValue()))
+                Iterables.transform(data.get("updatedPaths"), toTextValue()))
                 .containsExactly("sites.2");
 
         ArrayNode entityData = (ArrayNode) data.get("entityData");

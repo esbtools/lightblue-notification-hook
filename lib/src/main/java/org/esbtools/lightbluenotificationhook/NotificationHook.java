@@ -237,8 +237,8 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
 
         List<PathAndValue> entityData=new ArrayList<>();
         List<PathAndValue> removedEntityData = new ArrayList<>();
-        List<String> changedPaths = new ArrayList<>();
-        List<String> removedElements = new ArrayList<>();
+        List<String> updatedPaths = new ArrayList<>();
+        List<String> removedPaths = new ArrayList<>();
         boolean isInsert = hookDoc.getPreDoc() == null;
 
         // Add entity identities to entity data
@@ -253,20 +253,20 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         JsonDoc includeDoc=includeProjector.project(postDoc,jsonNodeFactory);
         flatten("", includeDoc.getRoot(), entityData);
 
-        // Add changes to entity data, removed entity data, changed paths, and removed elements
+        // Add updates to entity data, removed entity data, updated paths, and removed paths
         for(DocComparator.Delta<JsonNode> delta : diff.getDelta()) {
             if (delta instanceof DocComparator.Move && arrayOrderSignificant) {
                 JsonNode movedNode = ((DocComparator.Move<JsonNode>) delta).getMovedNode();
                 String newPath = delta.getField2().toString();
 
-                changedPaths.add(newPath);
+                updatedPaths.add(newPath);
                 flatten(newPath, movedNode, entityData);
             } else if (delta instanceof DocComparator.Removal) {
                 JsonNode removedNode=((DocComparator.Removal<JsonNode>)delta).getRemovedNode();
                 String removedPath = delta.getField().toString();
 
                 if(removedNode.isContainerNode()) {
-                    removedElements.add(removedPath);
+                    removedPaths.add(removedPath);
                     flatten(removedPath, removedNode, removedEntityData);
                 } else {
                     String removedValue = removedNode.asText();
@@ -276,7 +276,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 JsonNode addedNode = ((DocComparator.Addition<JsonNode>) delta).getAddedNode();
                 String addedPath = delta.getField().toString();
 
-                changedPaths.add(addedPath);
+                updatedPaths.add(addedPath);
 
                 if (addedNode.isContainerNode()) {
                     flatten(addedPath, addedNode, entityData);
@@ -288,16 +288,16 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 String modifiedPath = delta.getField2().toString();
                 String modifiedValue = modifiedNode.asText();
 
-                changedPaths.add(modifiedPath);
+                updatedPaths.add(modifiedPath);
                 removedEntityData.add(new PathAndValue(modifiedPath, modifiedValue));
             }
         }
 
         // Now we have the pieces, construct the notification to serialize.
         NotificationEntity notificationEntity = new NotificationEntity();
-        notificationEntity.setChangedPaths(changedPaths);
+        notificationEntity.setUpdatedPaths(updatedPaths);
         notificationEntity.setRemovedEntityData(removedEntityData);
-        notificationEntity.setRemovedPaths(removedElements);
+        notificationEntity.setRemovedPaths(removedPaths);
         notificationEntity.setEntityData(entityData);
 
         // TODO(ahenning): Support delete

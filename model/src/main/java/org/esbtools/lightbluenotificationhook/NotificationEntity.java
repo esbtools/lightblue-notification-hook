@@ -33,13 +33,14 @@ public class NotificationEntity {
     private Operation operation;
     private String clientRequestPrincipal;
     // TODO: Would like to use JDK8 date types, but with lightblue's included version
+    // Also, for now we have JDK7 consumers; cannot go to JDK8 yet.
     // of jackson, @JsonFormat does not work.
     // See: https://github.com/lightblue-platform/lightblue-core/issues/557
     private Date clientRequestDate;
     private Date processingDate;
     private Date processedDate;
     private List<PathAndValue> entityData;
-    private List<String> changedPaths;
+    private List<String> updatedPaths;
     private List<PathAndValue> removedEntityData;
     private List<String> removedPaths;
 
@@ -146,15 +147,15 @@ public class NotificationEntity {
         this.processedDate = processedDate;
     }
 
-    public List<String> getChangedPaths() {
-        return changedPaths;
+    public List<String> getUpdatedPaths() {
+        return updatedPaths;
     }
 
     @Description("Lightblue paths to fields which have changed or array elements which have been " +
             "added. If array order is significant, moved array elements' paths will also be " +
             "included.")
-    public void setChangedPaths(List<String> paths) {
-        this.changedPaths=paths;
+    public void setUpdatedPaths(List<String> paths) {
+        this.updatedPaths =paths;
     }
 
     public List<String> getRemovedPaths() {
@@ -213,7 +214,7 @@ public class NotificationEntity {
                 Objects.equals(processingDate, that.processingDate) &&
                 Objects.equals(processedDate, that.processedDate) &&
                 Objects.equals(entityData, that.entityData) &&
-                Objects.equals(changedPaths, that.changedPaths) &&
+                Objects.equals(updatedPaths, that.updatedPaths) &&
                 Objects.equals(removedEntityData, that.removedEntityData) &&
                 Objects.equals(removedPaths, that.removedPaths);
     }
@@ -221,7 +222,7 @@ public class NotificationEntity {
     @Override
     public int hashCode() {
         return Objects.hash(_id, entityName, entityVersion, status, operation, clientRequestPrincipal,
-                clientRequestDate, processingDate, processedDate, entityData, changedPaths,
+                clientRequestDate, processingDate, processedDate, entityData, updatedPaths,
                 removedEntityData, removedPaths);
     }
 
@@ -238,7 +239,7 @@ public class NotificationEntity {
                 ", processingDate=" + processingDate +
                 ", processedDate=" + processedDate +
                 ", entityData=" + entityData +
-                ", changedPaths=" + changedPaths +
+                ", updatedPaths=" + updatedPaths +
                 ", removedEntityData=" + removedEntityData +
                 ", removedPaths=" + removedPaths +
                 '}';
