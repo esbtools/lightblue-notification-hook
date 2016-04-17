@@ -33,9 +33,9 @@ public class NotificationEntity {
     private Operation operation;
     private String clientRequestPrincipal;
     // TODO: Would like to use JDK8 date types, but with lightblue's included version
-    // Also, for now we have JDK7 consumers; cannot go to JDK8 yet.
     // of jackson, @JsonFormat does not work.
     // See: https://github.com/lightblue-platform/lightblue-core/issues/557
+    // Also, for now we have JDK7 consumers; cannot go to JDK8 yet.
     private Date clientRequestDate;
     private Date processingDate;
     private Date processedDate;
