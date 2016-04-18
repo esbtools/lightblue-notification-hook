@@ -1,0 +1,23 @@
+language: java
+jdk:
+- oraclejdk8
+sudo: false
+before_install:
+- cp ./settings.xml ~/.m2/
+script:
+- mvn -B clean verify
+after_success:
+- '[[ $TRAVIS_BRANCH == "master" ]] && [[ $TRAVIS_JDK_VERSION == "oraclejdk8" ]] &&
+  { mvn -B clean deploy -DskipTests; };'
+after_script:
+- mvn clean -DsourceEncoding=UTF-8 cobertura:cobertura coveralls:report
+notifications:
+  email: false
+  irc:
+    channels:
+    - chat.freenode.net#esbtools
+    on_success: always
+env:
+  global:
+  - secure: mo53tIoWQpq05ohvTTPSpgy/JyCk3CyaMGvsWHBcrZCDblmpjl3PYGKl4g2swGD2IRA639fk4zju9uGiWeiXTeyS65MwdqwhyESkjizcNxCBlOdEpgVe5a+nP9Atv8mhKxuhdbK2HAfvv9e2kibFhJpTp5vP+dAmk9qZ7Vl88zZSK/9q4jCbNbY9JMC77wAHiVCs9qhKTwxLDQTgo27UFIAn3JaATZY9Y51Gc7KHzHtyjFcN11+zcGknuMvbR4STadrNz1EteU0lYk3RjpJmsCKoiRANKuD6SbX+vYeDmvsZ5kyMj3iLSTo0/tU3FuGY3754NfUZLDte0nmbf4EtHES/UQcM72NcEy3oMXiCN77BMsDElfHt4n2jDGZTwj+JyIBW/dTCelpGIyHpPHVs+Hie8uHqzb7rtAWVmDDFqOXMo8lra2y5grrHdfAuwmp4VtoA0+gE/azaFzNLe3gARUSOgekEngvjsqbEQyYQkFPKz8qqjoZU4GEnGiitVU3i+wsQD/ApotsOVd8SukurmSRE8DQHNc99p6+Fn0wQrolcs/C50T7njlHASfvdgkS159/od0AQ82ZNFC6xgURELyRzjjyXuFh9PbpkR9FY29TEQWqp7ZCthYTTh608zVKL+HGrpinwlaeZe7qF47wB2yyHSI6gMEeLYmbrCNC2WV8=
+  - secure: L/f6W8Z12A3u+Fvl6SxBZaaYCKpXoxN9Ni7dahzvuCkJymjk6aoKVBu8uH3TFscbd0+Hao4Izpdz0KHXMxtHiiDvT3gDC+GxZ8kHv5kS2e9lb1kUk7LrbewFYnpILmHj0dn1ZYKqlLVL0YcfZ6N80BIFHYqC0iNZc7bsoGhU7PkjuVgECP5XAaR+A/vzGUtaemyZHx/RvTMVkfP35PUMFWbB2UBRtzZyd2Uq8IIzniRG1PxSfRThZRUWYpdKdgsDFy7Ssx0lr2LZAV6KnhwVUklAVQPCVqy5zIYmQxLpg+Gt4uxoBhBp4l5SQGBIC6600zc8z7+GibOYbAUt1I7sb1xCm2Hy2ab1FPaLqMr8RCLZ7kNRZvZAhPB6o5D/m2CljpHMeHYikidVTa4Ijr+cUSiwQTrgaSTPO4fDvj875A28xZI91avjLjvgEz3eaB6MJAqSYvmhSa4DkbQ0EeXT8itNkI/S1vH6jwJfAXN2jRCHaCwl9oyrz7IQuRBpBDbBzdn5rERzAdoZ01Qa60849B5cOd5MmlMkL7IBY2Jj469k2kNSICUTUN3OPzsxPpVIsrgPWlFicqYPX0Gyj6rhzKnq1UVWawpix2EP1NXB1vm1ssxJayyhcnCcDgAAj+nJA1wUjOPfJLzEoX9Mtkc5KJz82z4y/3DG+/z1jKdtWU8=
