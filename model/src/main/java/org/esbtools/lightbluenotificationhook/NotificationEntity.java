@@ -1,12 +1,12 @@
 package org.esbtools.lightbluenotificationhook;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import io.github.alechenninger.lightblue.Description;
-import io.github.alechenninger.lightblue.EntityName;
-import io.github.alechenninger.lightblue.Identity;
-import io.github.alechenninger.lightblue.Required;
-import io.github.alechenninger.lightblue.Transient;
-import io.github.alechenninger.lightblue.Version;
+import com.redhat.lightblue.generator.Description;
+import com.redhat.lightblue.generator.EntityName;
+import com.redhat.lightblue.generator.Identity;
+import com.redhat.lightblue.generator.Required;
+import com.redhat.lightblue.generator.Transient;
+import com.redhat.lightblue.generator.Version;
 
 import javax.annotation.Nullable;
 import java.util.Date;
@@ -187,7 +187,7 @@ public class NotificationEntity {
         }
         return false;
     }
-    
+
     @Transient
     @Nullable
     public String getEntityDataForField(String fieldPath) {
@@ -257,7 +257,7 @@ public class NotificationEntity {
                 "notification should produce.")
         failed
     }
-    
+
     public static class PathAndValue {
         private String path;
         private String value;
