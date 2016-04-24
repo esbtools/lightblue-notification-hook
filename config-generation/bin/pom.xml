@@ -15,7 +15,7 @@
     <properties>
         <version.notification-hook>0.1.0-SNAPSHOT</version.notification-hook>
         <version.notification-hook-config-generation-api>0.1.0-SNAPSHOT</version.notification-hook-config-generation-api>
-        <version.lightblue-core-metadata>1.11.0</version.lightblue-core-metadata>
+        <version.lightblue-core-metadata>1.14.0</version.lightblue-core-metadata>
         <version.jimfs>1.1</version.jimfs>
     </properties>
 
