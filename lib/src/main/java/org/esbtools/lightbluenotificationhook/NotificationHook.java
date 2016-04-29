@@ -284,12 +284,15 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                     entityData.add(new PathAndValue(addedPath, addedNode.asText()));
                 }
             } else if (delta instanceof DocComparator.Modification) {
-                JsonNode modifiedNode = ((DocComparator.Modification<JsonNode>) delta).getModifiedNode();
+                DocComparator.Modification<JsonNode> modification =
+                    (DocComparator.Modification<JsonNode>) delta;
+                JsonNode modifiedNode = modification.getModifiedNode();
                 String modifiedPath = delta.getField2().toString();
                 String modifiedValue = modifiedNode.asText();
+                String unmodifiedValue = modification.getUnmodifiedNode().asText();
 
                 updatedPaths.add(modifiedPath);
-                removedEntityData.add(new PathAndValue(modifiedPath, modifiedValue));
+                removedEntityData.add(new PathAndValue(modifiedPath, unmodifiedValue));
             }
         }
 
