@@ -81,9 +81,20 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         Assert.assertEquals("5.0.0", notification.get("entityVersion").asText());
         Assert.assertEquals("insert", notification.get("operation").asText());
         ArrayNode entityData = (ArrayNode) notification.get("entityData");
-        Assert.assertEquals("Captured more or less entity data than expected", 2, entityData.size());
+        Assert.assertEquals("Captured more or less entity data than expected", 13, entityData.size());
         assertEntityDataValueEquals(entityData,"_id","123");
         assertEntityDataValueEquals(entityData,"iduid","345");
+        assertEntityDataValueEquals(entityData, "personalInfo.company", "Red Hat");
+        assertEntityDataValueEquals(entityData, "personalInfo.greeting", "Mr.");
+        assertEntityDataValueEquals(entityData, "personalInfo.firstName", "Burak");
+        assertEntityDataValueEquals(entityData, "personalInfo.lastName", "Serdar");
+        assertEntityDataValueEquals(entityData, "personalInfo.title", "Developer");
+        assertEntityDataValueEquals(entityData, "personalInfo.email", "bserdar@redhat.com");
+        assertEntityDataValueEquals(entityData, "personalInfo.emailConfirmed", "false");
+        assertEntityDataValueEquals(entityData, "personalInfo.phoneNumber", "123-1234 2222");
+        assertEntityDataValueEquals(entityData, "personalInfo.locale", "en_us");
+        assertEntityDataValueEquals(entityData, "personalInfo.timezone", "America/Denver");
+        assertEntityDataValueEquals(entityData, "personalInfo.department", "IT");
     }
 
     
