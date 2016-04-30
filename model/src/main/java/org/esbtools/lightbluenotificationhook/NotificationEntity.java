@@ -151,8 +151,8 @@ public class NotificationEntity {
         return updatedPaths;
     }
 
-    @Description("Lightblue paths to fields which have changed or array elements which have been " +
-            "added. If array order is significant, moved array elements' paths will also be " +
+    @Description("Lightblue paths to fields which have changed or container elements which have " +
+            "been added. If array order is significant, moved array elements' paths will also be " +
             "included.")
     public void setUpdatedPaths(List<String> paths) {
         this.updatedPaths =paths;
@@ -286,7 +286,7 @@ public class NotificationEntity {
         }
 
         @Description("Value stored in this path as a String. Only primitive values are supported.")
-        public void setValue(String value) {
+        public void setValue(@Nullable String value) {
             this.value = value;
         }
 
@@ -294,9 +294,9 @@ public class NotificationEntity {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            PathAndValue identityValue = (PathAndValue) o;
-            return Objects.equals(path, identityValue.path) &&
-                    Objects.equals(value, identityValue.value);
+            PathAndValue pathAndValue = (PathAndValue) o;
+            return Objects.equals(path, pathAndValue.path) &&
+                    Objects.equals(value, pathAndValue.value);
         }
 
         @Override

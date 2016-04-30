@@ -473,15 +473,38 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
                 "sites.0.streetAddress.city", "Denver");
     }
 
+    @Test
+    public void shouldCaptureNullsAsNull() throws Exception {
+        EntityMetadata md = getMd("usermd.json");
+        JsonNode post = loadJsonNode("userdata.json");
+        JsonDoc.modify(post, new Path("personalInfo.company"),
+                JsonNodeFactory.instance.nullNode(), true);
+
+        List<HookDoc> docs= new ArrayList<>();
+        HookDoc doc = new HookDoc(md, null, new JsonDoc(post), CRUDOperation.INSERT, "me");
+        docs.add(doc);
+
+        HookConfiguration cfg = new NotificationHookConfiguration(
+                projection("{'field':'personalInfo','recursive':1}"),
+                projection("{'field':'personalInfo','recursive':1}"),
+                false);
+
+        hook.processHook(md, cfg, docs);
+        JsonNode data=insertCapturingMediator.capturedInsert.getEntityData();
+
+        // Check we also have sites.1 contents
+        assertEntityDataValueEquals((ArrayNode) data.get("entityData"), "personalInfo.company", null);
+    }
+
     private void assertEntityDataValueEquals(ArrayNode ed, String path, String value) {
         int n=ed.size();
         for(int i=0;i<n;i++) {
             ObjectNode node=(ObjectNode)ed.get(i);
             JsonNode p=node.get("path");
             JsonNode v=node.get("value");
-            if(p!=null&&v!=null) {
-                if(path.equals(p.asText())&&value.equals(v.asText()))
-                    return;
+            if(p!=null && path.equals(p.asText(null))) {
+                Assert.assertEquals(path, value, v.asText(null));
+                return;
             }
         }
         Assert.fail("Expected to find "+path+":"+value);

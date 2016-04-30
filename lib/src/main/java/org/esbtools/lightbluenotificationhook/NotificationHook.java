@@ -1,10 +1,5 @@
 package org.esbtools.lightbluenotificationhook;
 
-import org.esbtools.lightbluenotificationhook.NotificationEntity.PathAndValue;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.redhat.lightblue.ClientIdentification;
 import com.redhat.lightblue.DataError;
 import com.redhat.lightblue.EntityVersion;
@@ -29,6 +24,11 @@ import com.redhat.lightblue.util.JsonCompare;
 import com.redhat.lightblue.util.JsonDoc;
 import com.redhat.lightblue.util.JsonNodeCursor;
 import com.redhat.lightblue.util.Path;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import org.esbtools.lightbluenotificationhook.NotificationEntity.PathAndValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -245,7 +245,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
         for (Field identityField : metadata.getEntitySchema().getIdentityFields()) {
             Path identityPath = identityField.getFullPath();
             String pathString = identityPath.toString();
-            String valueString = postDoc.get(identityPath).asText();
+            String valueString = postDoc.get(identityPath).asText(null);
             entityData.add(new PathAndValue(pathString, valueString));
         }
 
@@ -269,8 +269,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                     removedPaths.add(removedPath);
                     flatten(removedPath, removedNode, removedEntityData);
                 } else {
-                    String removedValue = removedNode.asText();
-                    removedEntityData.add(new PathAndValue(removedPath, removedValue));
+                    removedEntityData.add(new PathAndValue(removedPath, removedNode.asText(null)));
                 }
             } else if (delta instanceof DocComparator.Addition) {
                 JsonNode addedNode = ((DocComparator.Addition<JsonNode>) delta).getAddedNode();
@@ -281,15 +280,15 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 if (addedNode.isContainerNode()) {
                     flatten(addedPath, addedNode, entityData);
                 } else {
-                    entityData.add(new PathAndValue(addedPath, addedNode.asText()));
+                    entityData.add(new PathAndValue(addedPath, addedNode.asText(null)));
                 }
             } else if (delta instanceof DocComparator.Modification) {
                 DocComparator.Modification<JsonNode> modification =
                     (DocComparator.Modification<JsonNode>) delta;
-                JsonNode modifiedNode = modification.getModifiedNode();
                 String modifiedPath = delta.getField2().toString();
-                String modifiedValue = modifiedNode.asText();
-                String unmodifiedValue = modification.getUnmodifiedNode().asText();
+
+                String modifiedValue = modification.getModifiedNode().asText(null);
+                String unmodifiedValue = modification.getUnmodifiedNode().asText(null);
 
                 updatedPaths.add(modifiedPath);
                 entityData.add(new PathAndValue(modifiedPath, modifiedValue));
@@ -332,7 +331,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
 
             if(value.isValueNode()) {
                 String path = prefix.isEmpty() ? p : (prefix + "." + p);
-                PathAndValue data = new PathAndValue(path, value.asText());
+                PathAndValue data = new PathAndValue(path, value.asText(null));
 
                 // TODO(ahenning): Consider using Set instead of List for entityData
                 if (!entityData.contains(data)) {
