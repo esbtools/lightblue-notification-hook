@@ -99,7 +99,7 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
 
     
     @Test
-    public void shouldCreateNotificationWithIdsForEntityUpdatesWhenWatchedFieldChangesAndNoIncludeProjectionProvided() throws Exception {
+    public void shouldCreateNotificationWithIdsAndChangedWatchedFieldWhenNoIncludeProjectionProvided() throws Exception {
         EntityMetadata md=getMd("usermd.json");
         JsonNode pre=loadJsonNode("userdata.json");
         // Watch anything under "personalInfo"
@@ -126,9 +126,10 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         Assert.assertEquals("update", notification.get("operation").asText());
         // The id fields must be there, and nothing else
         ArrayNode ed=(ArrayNode)notification.get("entityData");
-        Assert.assertEquals(2,ed.size());
+        Assert.assertEquals(3,ed.size());
         assertEntityDataValueEquals(ed,"_id","123");
         assertEntityDataValueEquals(ed,"iduid","345");
+        assertEntityDataValueEquals(ed, "personalInfo.company", "blah");
     }
 
 
@@ -157,7 +158,7 @@ public class NotificationHookTest extends AbstractJsonSchemaTest {
         Assert.assertNotNull(notification);
         System.out.println(notification);
         ArrayNode ed=(ArrayNode)notification.get("entityData");
-        Assert.assertEquals(5,ed.size());
+        Assert.assertEquals(6,ed.size());
         assertEntityDataValueEquals(ed,"_id","123");
         assertEntityDataValueEquals(ed,"iduid","345");
         assertEntityDataValueEquals(ed,"login","bserdar");

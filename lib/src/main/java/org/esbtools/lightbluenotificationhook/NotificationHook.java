@@ -292,6 +292,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
                 String unmodifiedValue = modification.getUnmodifiedNode().asText();
 
                 updatedPaths.add(modifiedPath);
+                entityData.add(new PathAndValue(modifiedPath, modifiedValue));
                 removedEntityData.add(new PathAndValue(modifiedPath, unmodifiedValue));
             }
         }
