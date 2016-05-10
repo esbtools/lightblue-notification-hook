@@ -13,7 +13,14 @@
     <version>0.1.0-SNAPSHOT</version>
 
     <properties>
+        <version.lightblue-java-generator-api>0.1.2</version.lightblue-java-generator-api>
+        <version.lightblue-java-generator-bin>0.1.2</version.lightblue-java-generator-bin>
+        <version.exec-maven-plugin>1.4.0</version.exec-maven-plugin>
+
         <version.jdk>1.7</version.jdk>
+
+        <!-- Override with -Dmetadata.outputDirectory= -->
+        <metadata.outputDirectory>${project.build.outputDirectory}</metadata.outputDirectory>
     </properties>
 
     <build>
@@ -25,6 +32,63 @@
                     <target>${version.jdk}</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${version.exec-maven-plugin}</version>
+                <executions>
+                    <execution>
+                        <id>generate-lightblue-entity-metadata</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <includeProjectDependencies>true</includeProjectDependencies>
+                    <includePluginDependencies>true</includePluginDependencies>
+                    <executableDependency>
+                        <groupId>com.redhat.lightblue.generator</groupId>
+                        <artifactId>lightblue-java-generator-bin</artifactId>
+                    </executableDependency>
+                    <mainClass>com.redhat.lightblue.generator.Main</mainClass>
+                    <arguments>
+                        <argument>-o ${metadata.outputDirectory}</argument>
+                        <argument>org.esbtools.lightbluenotificationhook.NotificationEntity</argument>
+                    </arguments>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.redhat.lightblue.generator</groupId>
+                        <artifactId>lightblue-java-generator-bin</artifactId>
+                        <version>${version.lightblue-java-generator-bin}</version>
+                        <type>jar</type>
+                        <exclusions>
+                            <exclusion>
+                                <!--
+                                It doesn't appear that this is respected, and I don't know why.
+                                Not a huge deal though.
+                                -->
+                                <groupId>org.slf4j</groupId>
+                                <artifactId>slf4j-nop</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
 
@@ -32,7 +96,7 @@
         <dependency>
             <groupId>com.redhat.lightblue.generator</groupId>
             <artifactId>lightblue-java-generator-api</artifactId>
-            <version>0.1.1</version>
+            <version>${version.lightblue-java-generator-api}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>

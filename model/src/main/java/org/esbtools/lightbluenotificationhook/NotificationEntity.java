@@ -21,10 +21,11 @@ import java.util.Objects;
  * operation on an integrated entity on integrated fields.
  */
 @EntityName(NotificationEntity.ENTITY_NAME)
-@Version(value = NotificationEntity.ENTITY_VERSION, changelog = "Initial")
+// TODO(ahenning): preferImplementationVersion doesn't work yet
+@Version(value = "0.1.0", preferImplementationVersion = true, changelog = "Initial")
 public class NotificationEntity {
     public static final String ENTITY_NAME = "notification";
-    public static final String ENTITY_VERSION = "0.0.1-SNAPSHOT";
+    public static final String ENTITY_VERSION = Version.FromAnnotation.onEntity(NotificationEntity.class);
 
     private String _id;
     private String entityName;
