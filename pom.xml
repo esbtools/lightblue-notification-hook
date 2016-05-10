@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
       <groupId>org.sonatype.oss</groupId>
       <artifactId>oss-parent</artifactId>
@@ -12,7 +10,7 @@
     <groupId>org.esbtools.lightblue-notification-hook</groupId>
     <artifactId>lightblue-notification-hook-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
     <name>esbtools: ${project.groupId}|${project.artifactId}</name>
     <description>lightblue Notification Hook</description>
     <url>https://github.com/esbtools/lightblue-notification-hook/</url>
@@ -28,7 +26,8 @@
         <url>https://github.com/esbtools/lightblue-notification-hook</url>
         <connection>scm:git:https://github.com/esbtools/lightblue-notification-hook.git</connection>
         <developerConnection>scm:git:git@github.com:esbtools/lightblue-notification-hook.git</developerConnection>
-    </scm>
+      <tag>V0.1.0</tag>
+  </scm>
 
     <modules>
         <module>model</module>
