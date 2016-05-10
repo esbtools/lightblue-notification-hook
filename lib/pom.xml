@@ -3,15 +3,15 @@
     <parent>
         <artifactId>lightblue-notification-hook-parent</artifactId>
         <groupId>org.esbtools.lightblue-notification-hook</groupId>
-        <version>0.1.0</version>
+        <version>0.1.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>lightblue-notification-hook</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1-SNAPSHOT</version>
 
     <properties>
-        <version.model>0.1.0</version.model>
+        <version.model>0.1.1-SNAPSHOT</version.model>
         <version.core.lightblue>1.14.0</version.core.lightblue>
         <version.mongo.lightblue>1.14.0</version.mongo.lightblue>
 
