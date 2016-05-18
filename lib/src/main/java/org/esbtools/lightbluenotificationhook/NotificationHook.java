@@ -78,7 +78,9 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
 
     @Override
     public void setLightblueFactory(LightblueFactory lightblueFactory) {
-        this.lightblueFactory = lightblueFactory;
+        synchronized (this) {
+            this.lightblueFactory = lightblueFactory;
+        }
     }
 
     @Override
