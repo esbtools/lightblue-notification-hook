@@ -3,15 +3,15 @@
     <parent>
         <artifactId>lightblue-notification-hook-config-generation-parent</artifactId>
         <groupId>org.esbtools.lightblue-notification-hook</groupId>
-        <version>0.1.2-SNAPSHOT</version>
+        <version>0.1.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>lightblue-notification-hook-config-generation-bin</artifactId>
 
     <properties>
-        <version.notification-hook>0.1.2-SNAPSHOT</version.notification-hook>
-        <version.notification-hook-config-generation-api>0.1.2-SNAPSHOT</version.notification-hook-config-generation-api>
+        <version.notification-hook>0.1.1-SNAPSHOT</version.notification-hook>
+        <version.notification-hook-config-generation-api>0.1.1-SNAPSHOT</version.notification-hook-config-generation-api>
         <version.lightblue-core-metadata>1.14.0</version.lightblue-core-metadata>
         <version.jimfs>1.1</version.jimfs>
     </properties>
