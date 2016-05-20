@@ -44,7 +44,7 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     private final ObjectMapper objectMapper;
 
     private @Nullable LightblueFactory lightblueFactory;
-    private @Nullable Mediator mediator;
+    private @Nullable volatile Mediator mediator;
 
     private static final Logger LOGGER=LoggerFactory.getLogger(NotificationHook.class);
 
@@ -346,25 +346,22 @@ public class NotificationHook implements CRUDHook, LightblueFactoryAware {
     // validate it is non null and that's it.
     // See: https://github.com/lightblue-platform/lightblue-core/pull/587
     protected Mediator tryGetMediator() {
-        if (mediator != null) {
-            return mediator;
-        }
+        if (mediator == null) {
+            synchronized (this) {
+                if (mediator == null) {
+                    if (lightblueFactory == null) {
+                        throw new IllegalStateException("No Mediator or LightblueFactory provided!");
+                    }
 
-        synchronized (this) {
-            if (mediator != null) {
-                return mediator;
-            }
-
-            if (lightblueFactory == null) {
-                throw new IllegalStateException("No Mediator or LightblueFactory provided!");
-            }
-
-            try {
-                return mediator = lightblueFactory.getMediator();
-            } catch (Exception e) {
-                throw new IllegalStateException("Unable to get Mediator from LightblueFactory!", e);
+                    try {
+                        mediator = lightblueFactory.getMediator();
+                    } catch (Exception e) {
+                        throw new IllegalStateException("Unable to get Mediator from LightblueFactory!", e);
+                    }
+                }
             }
         }
+        return mediator;
     }
 
     static class HookResult {
