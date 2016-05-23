@@ -22,7 +22,7 @@ import java.util.Objects;
  */
 @EntityName(NotificationEntity.ENTITY_NAME)
 // TODO(ahenning): preferImplementationVersion doesn't work yet
-@Version(value = "0.1.0", preferImplementationVersion = true, changelog = "Initial")
+@Version(value = "0.1.1-SNAPSHOT", preferImplementationVersion = true, changelog = "Initial")
 public class NotificationEntity {
     public static final String ENTITY_NAME = "notification";
     public static final String ENTITY_VERSION = Version.FromAnnotation.onEntity(NotificationEntity.class);
