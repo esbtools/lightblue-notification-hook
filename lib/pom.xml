@@ -3,12 +3,12 @@
     <parent>
         <artifactId>lightblue-notification-hook-parent</artifactId>
         <groupId>org.esbtools.lightblue-notification-hook</groupId>
-        <version>0.1.2-SNAPSHOT</version>
+        <version>0.1.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>lightblue-notification-hook</artifactId>
-    <version>0.1.2-SNAPSHOT</version>
+    <version>0.1.2</version>
 
     <properties>
         <version.model>0.1.2</version.model>
