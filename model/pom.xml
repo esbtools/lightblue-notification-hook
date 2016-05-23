@@ -11,8 +11,8 @@
     <version>0.1.2-SNAPSHOT</version>
 
     <properties>
-        <version.lightblue-java-generator-api>0.1.4-SNAPSHOT</version.lightblue-java-generator-api>
-        <version.lightblue-java-generator-bin>0.1.4-SNAPSHOT</version.lightblue-java-generator-bin>
+        <version.lightblue-java-generator-api>0.1.3</version.lightblue-java-generator-api>
+        <version.lightblue-java-generator-bin>0.1.3</version.lightblue-java-generator-bin>
         <version.exec-maven-plugin>1.4.0</version.exec-maven-plugin>
 
         <version.jdk>1.7</version.jdk>

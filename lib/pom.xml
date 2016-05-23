@@ -11,7 +11,7 @@
     <version>0.1.2-SNAPSHOT</version>
 
     <properties>
-        <version.model>0.1.2-SNAPSHOT</version.model>
+        <version.model>0.1.2</version.model>
         <version.core.lightblue>1.14.0</version.core.lightblue>
         <version.mongo.lightblue>1.14.0</version.mongo.lightblue>
 
