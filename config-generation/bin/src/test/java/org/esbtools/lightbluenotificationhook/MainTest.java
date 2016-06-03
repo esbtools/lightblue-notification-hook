@@ -1,6 +1,7 @@
 package org.esbtools.lightbluenotificationhook;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,5 +38,29 @@ public class MainTest {
         assertEquals("watchedField", jsonConfig.get("watchProjection").get("field").textValue());
         assertEquals("includedField", jsonConfig.get("includeProjection").get("field").textValue());
         assertTrue(jsonConfig.get("arrayOrderingSignificant").booleanValue());
+    }
+
+    @Test
+    public void shouldWriteEmptyHookConfiguration() throws Exception {
+        Files.createDirectory(fileSystem.getPath("test/"));
+
+        main.writeHookConfigurationForClass(
+                HasEmptyHookConfiguration.class.getName(),
+                MainTest.class.getClassLoader(),
+                fileSystem.getPath("test/"));
+
+        Path expectedResult = fileSystem.getPath("test/testNotificationHookConfiguration.json");
+        JsonNode jsonConfig = mapper.readTree(Files.newBufferedReader(expectedResult));
+
+        assertEquals(0, jsonConfig.get("watchProjection").size());
+        assertEquals(0, jsonConfig.get("includeProjection").size());
+        assertFalse(jsonConfig.get("arrayOrderingSignificant").booleanValue());
+    }
+
+    static class HasEmptyHookConfiguration {
+        @GeneratesNotificationHookConfiguration
+        static EntityNotificationHookConfiguration emptyConfig = EntityNotificationHookConfiguration
+                .forEntity("test")
+                .build();
     }
 }
