@@ -24,8 +24,8 @@ public interface EntityNotificationHookConfiguration {
     final class Builder {
         private final String entityName;
 
-        private Projection watchProjection = null;
-        private Projection includeProjection = null;
+        private Projection watchProjection = Projection.project();
+        private Projection includeProjection = Projection.project();
         private boolean arrayOrderingSignificant = false;
 
         private Builder(String entityName) {
