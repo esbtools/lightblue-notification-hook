@@ -2,9 +2,6 @@ package org.esbtools.lightbluenotificationhook;
 
 import com.redhat.lightblue.client.Projection;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 /**
  * Defines notification hook configuration for a given entity using client-side constructs defined
  * in lightblue-client library for building projection JSON.
