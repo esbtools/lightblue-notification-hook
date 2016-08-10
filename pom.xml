@@ -10,7 +10,7 @@
     <groupId>org.esbtools.lightblue-notification-hook</groupId>
     <artifactId>lightblue-notification-hook-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.1.3-SNAPSHOT</version>
+    <version>0.1.3</version>
     <name>esbtools: ${project.groupId}|${project.artifactId}</name>
     <description>lightblue Notification Hook</description>
     <url>https://github.com/esbtools/lightblue-notification-hook/</url>
