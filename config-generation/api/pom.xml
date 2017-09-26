@@ -6,9 +6,12 @@
         <version>0.1.4-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
+    <name>lightblue-notification-hook: ${project.groupId}|${project.artifactId}</name>
     <artifactId>lightblue-notification-hook-config-generation-api</artifactId>
-
+    <properties>
+        <sonar.projectName>lightblue-notification-hook-config-generation-api</sonar.projectName>
+        <sonar.exclusions>**/*Test.java,**/*Exception.java</sonar.exclusions>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.redhat.lightblue.client</groupId>
