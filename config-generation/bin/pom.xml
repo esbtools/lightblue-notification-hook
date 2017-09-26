@@ -6,7 +6,7 @@
         <version>0.1.4-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
+    <name>lightblue-notification-hook: ${project.groupId}|${project.artifactId}</name>
     <artifactId>lightblue-notification-hook-config-generation-bin</artifactId>
 
     <properties>
@@ -14,6 +14,8 @@
         <version.notification-hook-config-generation-api>0.1.3</version.notification-hook-config-generation-api>
         <version.lightblue-core-metadata>1.14.0</version.lightblue-core-metadata>
         <version.jimfs>1.1</version.jimfs>
+        <sonar.projectName>lightblue-notification-hook-config-generation-bin</sonar.projectName>
+        <sonar.exclusions>**/*Test.java,**/*Exception.java</sonar.exclusions>
     </properties>
 
     <dependencyManagement>
