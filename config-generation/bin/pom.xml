@@ -10,9 +10,9 @@
     <artifactId>lightblue-notification-hook-config-generation-bin</artifactId>
 
     <properties>
-        <version.notification-hook>0.1.3</version.notification-hook>
-        <version.notification-hook-config-generation-api>0.1.3</version.notification-hook-config-generation-api>
-        <version.lightblue-core-metadata>1.14.0</version.lightblue-core-metadata>
+        <version.notification-hook>0.1.4-SNAPSHOT</version.notification-hook>
+        <version.notification-hook-config-generation-api>0.1.4-SNAPSHOT</version.notification-hook-config-generation-api>
+        <version.lightblue-core-metadata>2.8.0-SNAPSHOT</version.lightblue-core-metadata>
         <version.jimfs>1.1</version.jimfs>
         <sonar.projectName>lightblue-notification-hook-config-generation-bin</sonar.projectName>
         <sonar.exclusions>**/*Test.java,**/*Exception.java</sonar.exclusions>
