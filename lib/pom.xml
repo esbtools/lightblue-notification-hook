@@ -13,7 +13,7 @@
     <properties>
         <version.model>0.1.3</version.model>
         <version.core.lightblue>1.14.0</version.core.lightblue>
-        <version.mongo.lightblue>1.14.0</version.mongo.lightblue>
+        <version.mongo.lightblue>1.35.1-SNAPSHOT</version.mongo.lightblue>
 
         <version.slf4j>1.7.7</version.slf4j>
 
