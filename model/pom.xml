@@ -11,8 +11,8 @@
     <version>0.1.4-SNAPSHOT</version>
     <name>lightblue-notification-hook: ${project.groupId}|${project.artifactId}</name>
     <properties>
-        <version.lightblue-java-generator-api>0.1.6-SNAPSHOT</version.lightblue-java-generator-api>
-        <version.lightblue-java-generator-bin>0.1.6-SNAPSHOT</version.lightblue-java-generator-bin>
+        <version.lightblue-java-generator-api>0.1.6</version.lightblue-java-generator-api>
+        <version.lightblue-java-generator-bin>0.1.6</version.lightblue-java-generator-bin>
         <version.exec-maven-plugin>1.4.0</version.exec-maven-plugin>
 
         <version.jdk>1.7</version.jdk>
