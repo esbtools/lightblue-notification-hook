@@ -17,7 +17,7 @@
 
         <version.slf4j>1.7.7</version.slf4j>
 
-        <version.junit>4.12</version.junit>
+        <version.junit>4.13.2</version.junit>
         <version.mockito>2.0.31-beta</version.mockito>
         <version.truth>0.27</version.truth>
         <rpm.release_number>1</rpm.release_number>
