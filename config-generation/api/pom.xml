@@ -16,7 +16,7 @@
         <dependency>
             <groupId>com.redhat.lightblue.client</groupId>
             <artifactId>lightblue-client-core</artifactId>
-            <version>4.5.0</version>
+            <version>5.21.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>
