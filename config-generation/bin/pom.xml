@@ -12,7 +12,7 @@
     <properties>
         <version.notification-hook>${project.version}</version.notification-hook>
         <version.notification-hook-config-generation-api>${project.version}</version.notification-hook-config-generation-api>
-        <version.lightblue-core-metadata>2.18.0-SNAPSHOT</version.lightblue-core-metadata>
+        <version.lightblue-core-metadata>2.18.0</version.lightblue-core-metadata>
         <version.jimfs>1.1</version.jimfs>
         <sonar.projectName>lightblue-notification-hook-config-generation-bin</sonar.projectName>
         <sonar.exclusions>**/*Test.java,**/*Exception.java</sonar.exclusions>
