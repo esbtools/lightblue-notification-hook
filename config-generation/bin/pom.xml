@@ -10,8 +10,8 @@
     <artifactId>lightblue-notification-hook-config-generation-bin</artifactId>
 
     <properties>
-        <version.notification-hook>${project.version}</version.notification-hook>
-        <version.notification-hook-config-generation-api>${project.version}</version.notification-hook-config-generation-api>
+        <version.notification-hook>0.1.8-SNAPSHOT</version.notification-hook>
+        <version.notification-hook-config-generation-api>0.1.8-SNAPSHOT</version.notification-hook-config-generation-api>
         <version.lightblue-core-metadata>2.18.0</version.lightblue-core-metadata>
         <version.jimfs>1.1</version.jimfs>
         <sonar.projectName>lightblue-notification-hook-config-generation-bin</sonar.projectName>

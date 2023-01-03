@@ -11,7 +11,7 @@
     <version>0.1.8-SNAPSHOT</version>
     <name>lightblue-notification-hook: ${project.groupId}|${project.artifactId}</name>
     <properties>
-        <version.model>${project.version}</version.model>
+        <version.model>0.1.8-SNAPSHOT</version.model>
         <version.core.lightblue>2.18.0</version.core.lightblue>
         <version.mongo.lightblue>1.40.0</version.mongo.lightblue>
 
