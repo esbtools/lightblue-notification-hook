@@ -11,11 +11,11 @@
     <version>0.1.8-SNAPSHOT</version>
     <name>lightblue-notification-hook: ${project.groupId}|${project.artifactId}</name>
     <properties>
-        <version.lightblue-java-generator-api>0.1.6</version.lightblue-java-generator-api>
-        <version.lightblue-java-generator-bin>0.1.6</version.lightblue-java-generator-bin>
-        <version.exec-maven-plugin>1.4.0</version.exec-maven-plugin>
+        <version.lightblue-java-generator-api>0.1.9</version.lightblue-java-generator-api>
+        <version.lightblue-java-generator-bin>0.1.9</version.lightblue-java-generator-bin>
+        <version.exec-maven-plugin>3.1.0</version.exec-maven-plugin>
 
-        <version.jdk>1.7</version.jdk>
+        <version.jdk>1.8</version.jdk>
         <sonar.projectName>lightblue-notification-hook-model</sonar.projectName>
         <sonar.exclusions>**/*Test.java,**/*Exception.java</sonar.exclusions>
         <!-- Override with -Dmetadata.outputDirectory= -->
@@ -104,7 +104,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>2.7.1</version>
+            <version>2.14.1</version>
         </dependency>
     </dependencies>
 </project>

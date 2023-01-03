@@ -247,5 +247,30 @@
             </plugins>
           </build>
         </profile>
+        <profile>
+          <id>check-dependencies</id>
+          <activation>
+            <activeByDefault>false</activeByDefault>
+          </activation>
+          <build>
+            <plugins>
+              <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>7.2.1</version>
+                <configuration>
+                  <skipSystemScope>true</skipSystemScope>
+                </configuration>
+                <executions>
+                  <execution>
+                    <goals>
+                      <goal>check</goal>
+                    </goals>
+                  </execution>
+                </executions>
+              </plugin>
+            </plugins>
+          </build>
+        </profile>
     </profiles>
 </project>
